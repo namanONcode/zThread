@@ -112,7 +112,7 @@
         <checkstyle.version>3.6.0</checkstyle.version>
         <checkstyle-tool.version>10.21.4</checkstyle-tool.version>
         <pmd-plugin.version>3.28.0</pmd-plugin.version>
-        <pmd-tool.version>7.16.0</pmd-tool.version>
+        <pmd-tool.version>7.26.0</pmd-tool.version>
         <spotbugs.version>4.10.3.0</spotbugs.version>
         <jacoco.version>0.8.15</jacoco.version>
     </properties>
