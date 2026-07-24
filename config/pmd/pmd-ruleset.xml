@@ -8,8 +8,6 @@
 
     <!-- Best Practices -->
     <rule ref="category/java/bestpractices.xml">
-        <exclude name="JUnitTestContainsTooManyAsserts"/>
-        <exclude name="JUnitAssertionsShouldIncludeMessage"/>
         <exclude name="GuardLogStatement"/>
     </rule>
 
@@ -18,7 +16,6 @@
         <exclude name="OnlyOneReturn"/>
         <exclude name="AtLeastOneConstructor"/>
         <exclude name="CommentDefaultAccessModifier"/>
-        <exclude name="DefaultPackage"/>
         <exclude name="LongVariable"/>
         <exclude name="ShortVariable"/>
         <exclude name="ShortMethodName"/>
@@ -27,6 +24,7 @@
         <exclude name="CallSuperInConstructor"/>
         <exclude name="LocalVariableCouldBeFinal"/>
         <exclude name="MethodArgumentCouldBeFinal"/>
+        <exclude name="FieldDeclarationsShouldBeAtStartOfClass"/>
     </rule>
 
     <!-- Design -->
@@ -42,8 +40,6 @@
 
     <!-- Error Prone -->
     <rule ref="category/java/errorprone.xml">
-        <exclude name="BeanMembersShouldSerialize"/>
-        <exclude name="DataflowAnomalyAnalysis"/>
         <exclude name="AvoidLiteralsInIfCondition"/>
         <exclude name="AvoidFieldNameMatchingMethodName"/>
     </rule>

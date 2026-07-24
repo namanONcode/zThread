@@ -69,7 +69,7 @@ public final class ObjectPool<T> {
    *
    * @return a pooled or new object
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "PMD.NullAssignment"})
   public T borrow() {
     if (size == 0) {
       return factory.get();

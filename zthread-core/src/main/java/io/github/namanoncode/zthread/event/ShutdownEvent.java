@@ -30,7 +30,7 @@ package io.github.namanoncode.zthread.event;
  */
 public final class ShutdownEvent implements ZEvent {
 
-  private long timestampNanos;
+  private final long timestampNanos;
 
   /** Creates a new shutdown event. */
   public ShutdownEvent() {

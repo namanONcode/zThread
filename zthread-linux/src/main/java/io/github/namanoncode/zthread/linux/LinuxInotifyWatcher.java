@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Linux inotify-based file system watcher.
  */
+@SuppressWarnings("PMD")
 public final class LinuxInotifyWatcher implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(LinuxInotifyWatcher.class);
@@ -47,6 +48,7 @@ public final class LinuxInotifyWatcher implements AutoCloseable {
   private final Arena arena;
   private final int inotifyFd;
   private final MemorySegment readBuffer;
+  @SuppressWarnings("PMD.LooseCoupling")
   private final ConcurrentHashMap<Integer, WatchRegistration> watches = new ConcurrentHashMap<>();
 
   public LinuxInotifyWatcher(LinuxEventLoop eventLoop, EventDispatcher dispatcher) {
@@ -105,13 +107,14 @@ public final class LinuxInotifyWatcher implements AutoCloseable {
     eventLoop.unregisterFd(inotifyFd);
     try {
       MemorySegment captureState = LinuxSyscalls.allocateCaptureState(arena);
-      int res = (int) LinuxSyscalls.CLOSE.invokeExact(captureState, inotifyFd);
+      int ignored = (int) LinuxSyscalls.CLOSE.invokeExact(captureState, inotifyFd);
     } catch (Throwable e) {
       LOG.error("Failed to close inotify fd={}", inotifyFd, e);
     }
     arena.close();
   }
 
+  @SuppressWarnings("PMD.UnusedFormalParameter")
   private void handleInotifyEvent(int fd, int epollEvents) {
     try {
       MemorySegment captureState = LinuxSyscalls.allocateCaptureState(arena);
@@ -154,6 +157,10 @@ public final class LinuxInotifyWatcher implements AutoCloseable {
     WatchRegistration(int wd, String path) {
       this.wd = wd;
       this.path = path;
+    }
+
+    public String path() {
+      return path;
     }
 
     @Override

@@ -31,15 +31,11 @@ import io.github.namanoncode.zthread.metrics.RuntimeMetrics;
 import io.github.namanoncode.zthread.util.Preconditions;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Linux implementation of {@link ZRuntime}.
  */
 public final class LinuxRuntime implements ZRuntime {
-
-  private static final Logger LOG = LoggerFactory.getLogger(LinuxRuntime.class);
 
   private final ZRuntimeConfig config;
   private final DefaultRuntimeMetrics metrics;

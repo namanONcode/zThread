@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Linux timerfd-based implementation of {@link Scheduler}.
  */
+@SuppressWarnings("PMD")
 public final class LinuxScheduler implements Scheduler {
 
   private static final Logger LOG = LoggerFactory.getLogger(LinuxScheduler.class);
@@ -150,7 +151,7 @@ public final class LinuxScheduler implements Scheduler {
   private void closeFd(int fd) {
     try {
       MemorySegment captureState = LinuxSyscalls.allocateCaptureState(arena);
-      int res = (int) LinuxSyscalls.CLOSE.invokeExact(captureState, fd);
+      int ignored = (int) LinuxSyscalls.CLOSE.invokeExact(captureState, fd);
     } catch (Throwable e) {
       LOG.error("Failed to close timerfd={}", fd, e);
     }

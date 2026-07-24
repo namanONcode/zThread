@@ -34,8 +34,6 @@ public final class TimerEvent implements ZEvent {
   private long expirationCount;
   private long timestampNanos;
 
-  /** Creates an uninitialized timer event. */
-  public TimerEvent() {}
 
   /**
    * Resets this event with new values.

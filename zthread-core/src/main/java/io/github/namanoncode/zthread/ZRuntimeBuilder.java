@@ -49,7 +49,7 @@ public final class ZRuntimeBuilder {
   private int bufferSize = 4096;
   private int maxEventsPerPoll = 64;
   private boolean metricsEnabled = true;
-  private boolean debugEnabled = false;
+  private boolean debugEnabled;
 
   /** Creates a new builder with default settings. */
   ZRuntimeBuilder() {}

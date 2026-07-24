@@ -112,7 +112,7 @@
         <checkstyle.version>3.6.0</checkstyle.version>
         <checkstyle-tool.version>10.21.4</checkstyle-tool.version>
         <pmd-plugin.version>3.26.0</pmd-plugin.version>
-        <pmd-tool.version>7.9.0</pmd-tool.version>
+        <pmd-tool.version>7.11.0</pmd-tool.version>
         <spotbugs.version>4.9.3.0</spotbugs.version>
         <jacoco.version>0.8.15</jacoco.version>
     </properties>
@@ -442,8 +442,19 @@
                             <artifactId>pmd-java</artifactId>
                             <version>${pmd-tool.version}</version>
                         </dependency>
+                        <dependency>
+                            <groupId>net.sourceforge.pmd</groupId>
+                            <artifactId>pmd-core</artifactId>
+                            <version>${pmd-tool.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>9.7.1</version>
+                        </dependency>
                     </dependencies>
                     <configuration>
+                        <targetJdk>21</targetJdk>
                         <rulesets>
                             <ruleset>${maven.multiModuleProjectDirectory}/config/pmd/pmd-ruleset.xml</ruleset>
                         </rulesets>

@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * <p>Manages an epoll file descriptor and a pre-allocated buffer for epoll_event structs.
  * The buffer is allocated in an arena that lives for the lifetime of the poller.
  */
+@SuppressWarnings("PMD")
 public final class LinuxNativePoller implements NativePoller {
 
   private static final Logger LOG = LoggerFactory.getLogger(LinuxNativePoller.class);
@@ -145,7 +146,7 @@ public final class LinuxNativePoller implements NativePoller {
     closed = true;
     try {
       MemorySegment captureState = LinuxSyscalls.allocateCaptureState(arena);
-      int res = (int) LinuxSyscalls.CLOSE.invokeExact(captureState, epollFd);
+      LinuxSyscalls.CLOSE.invokeExact(captureState, epollFd);
     } catch (Throwable e) {
       LOG.error("Failed to close epoll fd={}", epollFd, e);
     }

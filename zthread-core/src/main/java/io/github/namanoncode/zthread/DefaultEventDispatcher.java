@@ -48,6 +48,7 @@ public final class DefaultEventDispatcher implements EventDispatcher {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultEventDispatcher.class);
 
+  @SuppressWarnings("PMD.LooseCoupling")
   private final Map<Class<? extends ZEvent>, List<HandlerEntry<?>>> handlers =
       new ConcurrentHashMap<>();
   private final RuntimeMetrics metrics;
@@ -78,7 +79,7 @@ public final class DefaultEventDispatcher implements EventDispatcher {
   }
 
   @Override
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings({"unchecked", "rawtypes", "PMD.AvoidCatchingGenericException"})
   public void dispatch(ZEvent event) {
     List<HandlerEntry<?>> entries = handlers.get(event.getClass());
     if (entries == null || entries.isEmpty()) {
@@ -93,8 +94,7 @@ public final class DefaultEventDispatcher implements EventDispatcher {
       try {
         entry.handler().handle(event);
       } catch (Exception e) {
-        LOG.error("Handler threw exception for {}: {}", event.getClass().getSimpleName(),
-            e.getMessage(), e);
+        LOG.error("Handler threw exception for {}: {}", event.getClass().getSimpleName(), e);
         dispatchError(e, "Handler exception for " + event.getClass().getSimpleName());
       } finally {
         metrics.recordHandlerTime(System.nanoTime() - start);

@@ -51,8 +51,6 @@ public final class SocketEvent implements ZEvent {
   private int eventMask;
   private long timestampNanos;
 
-  /** Creates an uninitialized socket event. Used by the object pool. */
-  public SocketEvent() {}
 
   /**
    * Resets this event with new values. Called by the event loop before dispatch.

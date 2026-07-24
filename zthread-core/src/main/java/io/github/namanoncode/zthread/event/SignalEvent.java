@@ -34,8 +34,6 @@ public final class SignalEvent implements ZEvent {
   private int senderUid;
   private long timestampNanos;
 
-  /** Creates an uninitialized signal event. */
-  public SignalEvent() {}
 
   /**
    * Resets this event with new values.

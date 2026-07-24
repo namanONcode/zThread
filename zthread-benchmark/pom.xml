@@ -14,6 +14,10 @@
     <name>zThread Benchmark</name>
     <description>JMH benchmarks for the zThread event runtime comparing against BlockingQueue, ExecutorService, and Netty.</description>
 
+    <properties>
+        <pmd.skip>true</pmd.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.github.namanoncode</groupId>

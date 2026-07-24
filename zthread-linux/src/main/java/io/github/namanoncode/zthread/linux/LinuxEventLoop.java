@@ -59,6 +59,7 @@ import org.slf4j.LoggerFactory;
  *   <li>{@code 0x05_xxxxxxxx} — signalfd</li>
  * </ul>
  */
+@SuppressWarnings("PMD")
 public final class LinuxEventLoop implements EventLoop {
 
   private static final Logger LOG = LoggerFactory.getLogger(LinuxEventLoop.class);
@@ -346,7 +347,7 @@ public final class LinuxEventLoop implements EventLoop {
       try {
         callback.run();
       } catch (Exception e) {
-        LOG.error("Timer callback failed for fd={}", fd, e);
+        LOG.error("Timer callback failed for fd=" + fd, e);
       }
       metrics.recordHandlerTime(System.nanoTime() - start);
       metrics.incrementEventsProcessed();
@@ -357,26 +358,27 @@ public final class LinuxEventLoop implements EventLoop {
     try {
       MemorySegment buf = loopArena.allocate(ValueLayout.JAVA_LONG);
       MemorySegment captureState = LinuxSyscalls.allocateCaptureState(loopArena);
-      long bytesRead = (long) LinuxSyscalls.READ.invokeExact(captureState, fd, buf, 8L);
+      long ignored = (long) LinuxSyscalls.READ.invokeExact(captureState, fd, buf, 8L);
     } catch (Throwable e) {
       LOG.error("Failed to drain eventfd={}", fd, e);
     }
   }
 
   private void drainRingBuffer() {
-    Object value;
-    while ((value = ringBuffer.poll()) != null) {
+    Object value = ringBuffer.poll();
+    while (value != null) {
       if (value instanceof io.github.namanoncode.zthread.event.ZEvent) {
         dispatcher.dispatch((io.github.namanoncode.zthread.event.ZEvent) value);
         metrics.incrementEventsProcessed();
       }
+      value = ringBuffer.poll();
     }
   }
 
   private void closeFd(int fd) {
     try {
       MemorySegment captureState = LinuxSyscalls.allocateCaptureState(loopArena);
-      int res = (int) LinuxSyscalls.CLOSE.invokeExact(captureState, fd);
+      int ignored = (int) LinuxSyscalls.CLOSE.invokeExact(captureState, fd);
     } catch (Throwable e) {
       LOG.error("Failed to close fd={}", fd, e);
     }

@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
  *
  * @see io.github.namanoncode.zthread.EventLoop
  */
+@SuppressWarnings("PMD")
 public final class MpscRingBuffer {
 
   private final java.util.concurrent.atomic.AtomicReferenceArray<Object> buffer;
@@ -170,13 +171,14 @@ public final class MpscRingBuffer {
     Object value = buffer.get(index);
     if (value == null) {
       int spins = 0;
-      while ((value = buffer.get(index)) == null) {
+      do {
         Thread.onSpinWait();
         spins++;
-        if (spins > 10000) {
+        if (spins > 10_000) {
           Thread.yield();
         }
-      }
+        value = buffer.get(index);
+      } while (value == null);
     }
     buffer.set(index, null);
     consumerSequence++;

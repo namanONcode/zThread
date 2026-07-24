@@ -68,8 +68,6 @@ public final class FileEvent implements ZEvent {
   private String name;
   private long timestampNanos;
 
-  /** Creates an uninitialized file event. */
-  public FileEvent() {}
 
   /**
    * Resets this event with new values.

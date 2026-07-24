@@ -77,9 +77,10 @@ final class ZSchedulerWorker implements Scheduler.Worker {
   @Override
   public void dispose() {
     if (disposed.compareAndSet(false, true)) {
-      HandlerRegistration reg;
-      while ((reg = registrations.poll()) != null) {
+      HandlerRegistration reg = registrations.poll();
+      while (reg != null) {
         reg.cancel();
+        reg = registrations.poll();
       }
     }
   }

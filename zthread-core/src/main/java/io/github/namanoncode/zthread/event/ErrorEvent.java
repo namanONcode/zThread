@@ -30,8 +30,6 @@ public final class ErrorEvent implements ZEvent {
   private String message;
   private long timestampNanos;
 
-  /** Creates an uninitialized error event. */
-  public ErrorEvent() {}
 
   /**
    * Resets this event with new values.
