@@ -30,6 +30,7 @@ package io.github.namanoncode.zthread;
  *
  * @see ZRuntimeBuilder
  */
+@FunctionalInterface
 public interface ZRuntimeFactory {
 
   /**
