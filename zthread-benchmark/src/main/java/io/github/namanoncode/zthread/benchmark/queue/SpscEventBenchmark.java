@@ -1,0 +1,268 @@
+package io.github.namanoncode.zthread.benchmark.queue;
+
+import io.github.namanoncode.zthread.ZRuntime;
+import io.github.namanoncode.zthread.handler.EventHandler;
+import io.netty.channel.DefaultEventLoop;
+import io.netty.channel.EventLoop;
+import java.util.concurrent.*;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
+import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Schedulers;
+
+@State(Scope.Benchmark)
+@BenchmarkMode(Mode.Throughput)
+@OutputTimeUnit(TimeUnit.SECONDS)
+@Warmup(iterations = 3, time = 2)
+@Measurement(iterations = 5, time = 3)
+@Fork(value = 1, jvmArgsAppend = {"--enable-native-access=ALL-UNNAMED", "-XX:+UseZGC"})
+public class SpscEventBenchmark {
+
+    public static final int BATCH_SIZE = 1_000_000;
+
+    // Standard Queues
+    private ArrayBlockingQueue<Object> arrayQueue;
+    private LinkedBlockingQueue<Object> linkedQueue;
+    private ConcurrentLinkedQueue<Object> concurrentQueue;
+    private SynchronousQueue<Object> synchronousQueue;
+
+    // Async Runtimes
+    private ZRuntime zRuntime;
+    private EventLoop nettyEventLoop;
+    private io.vertx.core.Vertx vertx;
+    
+    // Reactor
+    private Sinks.Many<Object> reactorSink;
+
+    // Virtual Threads
+    private ExecutorService virtualThreadExecutor;
+
+    private static final io.github.namanoncode.zthread.event.CustomEvent EVENT = new io.github.namanoncode.zthread.event.CustomEvent("bench");
+
+    // Consumer thread for raw queues
+    private volatile boolean running;
+    private Thread queueConsumerThread;
+    private CountDownLatch queueLatch;
+    private BlockingQueue<Object> activeBlockingQueue;
+    private ConcurrentLinkedQueue<Object> activeConcurrentQueue;
+
+    @Setup(Level.Trial)
+    public void setup() {
+        arrayQueue = new ArrayBlockingQueue<>(BATCH_SIZE);
+        linkedQueue = new LinkedBlockingQueue<>(BATCH_SIZE);
+        concurrentQueue = new ConcurrentLinkedQueue<>();
+        synchronousQueue = new SynchronousQueue<>();
+
+        // Setup zThread with enough buffer for the batch to prevent EventLoopException: buffer full
+        zRuntime = ZRuntime.builder().bufferSize(BATCH_SIZE).build();
+        zRuntime.on(io.github.namanoncode.zthread.event.CustomEvent.class, evt -> {
+            Blackhole bh = zBlackhole;
+            if (bh != null) {
+                bh.consume(evt);
+            }
+            CountDownLatch latch = zLatch;
+            if (latch != null) {
+                latch.countDown();
+            }
+        });
+        zRuntime.start();
+
+        // Setup Netty
+        nettyEventLoop = new DefaultEventLoop();
+
+        // Setup Vertx
+        vertx = io.vertx.core.Vertx.vertx();
+
+        // Setup Virtual Threads
+        virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
+    }
+
+    private volatile CountDownLatch zLatch;
+    private volatile Blackhole zBlackhole;
+
+    @TearDown(Level.Trial)
+    public void teardown() throws InterruptedException {
+        zRuntime.shutdown();
+        zRuntime.awaitTermination(5, TimeUnit.SECONDS);
+
+        nettyEventLoop.shutdownGracefully().await(5, TimeUnit.SECONDS);
+        
+        CountDownLatch vertxLatch = new CountDownLatch(1);
+        vertx.close().onComplete(v -> vertxLatch.countDown());
+        vertxLatch.await();
+
+        virtualThreadExecutor.shutdown();
+        virtualThreadExecutor.awaitTermination(5, TimeUnit.SECONDS);
+    }
+
+    @Setup(Level.Invocation)
+    public void setupInvocation() {
+        queueLatch = new CountDownLatch(BATCH_SIZE);
+        running = true;
+    }
+
+    @TearDown(Level.Invocation)
+    public void teardownInvocation() throws InterruptedException {
+        running = false;
+        if (queueConsumerThread != null) {
+            queueConsumerThread.interrupt();
+            queueConsumerThread.join();
+            queueConsumerThread = null;
+        }
+        activeBlockingQueue = null;
+        activeConcurrentQueue = null;
+    }
+
+    private void startBlockingQueueConsumer(BlockingQueue<Object> queue, Blackhole bh) {
+        activeBlockingQueue = queue;
+        queueConsumerThread = new Thread(() -> {
+            try {
+                while (running) {
+                    Object obj = activeBlockingQueue.poll(10, TimeUnit.MILLISECONDS);
+                    if (obj != null) {
+                        bh.consume(obj);
+                        queueLatch.countDown();
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        queueConsumerThread.start();
+    }
+
+    private void startConcurrentQueueConsumer(ConcurrentLinkedQueue<Object> queue, Blackhole bh) {
+        activeConcurrentQueue = queue;
+        queueConsumerThread = new Thread(() -> {
+            while (running) {
+                Object obj = activeConcurrentQueue.poll();
+                if (obj != null) {
+                    bh.consume(obj);
+                    queueLatch.countDown();
+                }
+            }
+        });
+        queueConsumerThread.start();
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(BATCH_SIZE)
+    public void benchArrayBlockingQueue(Blackhole bh) throws InterruptedException {
+        startBlockingQueueConsumer(arrayQueue, bh);
+        for (int i = 0; i < BATCH_SIZE; i++) {
+            arrayQueue.put(EVENT);
+        }
+        queueLatch.await();
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(BATCH_SIZE)
+    public void benchLinkedBlockingQueue(Blackhole bh) throws InterruptedException {
+        startBlockingQueueConsumer(linkedQueue, bh);
+        for (int i = 0; i < BATCH_SIZE; i++) {
+            linkedQueue.put(EVENT);
+        }
+        queueLatch.await();
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(BATCH_SIZE)
+    public void benchSynchronousQueue(Blackhole bh) throws InterruptedException {
+        startBlockingQueueConsumer(synchronousQueue, bh);
+        for (int i = 0; i < BATCH_SIZE; i++) {
+            synchronousQueue.put(EVENT);
+        }
+        queueLatch.await();
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(BATCH_SIZE)
+    public void benchConcurrentLinkedQueue(Blackhole bh) throws InterruptedException {
+        startConcurrentQueueConsumer(concurrentQueue, bh);
+        for (int i = 0; i < BATCH_SIZE; i++) {
+            concurrentQueue.offer(EVENT);
+        }
+        queueLatch.await();
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(BATCH_SIZE)
+    public void benchZThread(Blackhole bh) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
+        this.zLatch = latch;
+        this.zBlackhole = bh;
+
+        for (int i = 0; i < BATCH_SIZE; i++) {
+            while (!zRuntime.tryPost(EVENT)) {
+                Thread.onSpinWait();
+            }
+        }
+        latch.await();
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(BATCH_SIZE)
+    public void benchNetty(Blackhole bh) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
+        for (int i = 0; i < BATCH_SIZE; i++) {
+            nettyEventLoop.execute(() -> {
+                bh.consume(EVENT);
+                latch.countDown();
+            });
+        }
+        latch.await();
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(BATCH_SIZE)
+    public void benchVirtualThreads(Blackhole bh) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
+        for (int i = 0; i < BATCH_SIZE; i++) {
+            virtualThreadExecutor.submit(() -> {
+                bh.consume(EVENT);
+                latch.countDown();
+            });
+        }
+        latch.await();
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(BATCH_SIZE)
+    public void benchReactor(Blackhole bh) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
+        reactorSink = reactor.core.publisher.Sinks.many().unicast().onBackpressureBuffer();
+        
+        reactorSink.asFlux()
+            .publishOn(Schedulers.single())
+            .subscribe(evt -> {
+                bh.consume(evt);
+                latch.countDown();
+            });
+
+        for (int i = 0; i < BATCH_SIZE; i++) {
+            reactorSink.tryEmitNext(EVENT);
+        }
+        latch.await();
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(BATCH_SIZE)
+    public void benchVertx(Blackhole bh) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
+        io.vertx.core.eventbus.MessageConsumer<Object> consumer = vertx.eventBus().localConsumer("benchmark.address", msg -> {
+            bh.consume(msg.body());
+            latch.countDown();
+        });
+
+        // Wait for consumer to be registered to avoid dropping messages
+        CountDownLatch regLatch = new CountDownLatch(1);
+        consumer.completionHandler(res -> regLatch.countDown());
+        regLatch.await();
+
+        for (int i = 0; i < BATCH_SIZE; i++) {
+            vertx.eventBus().send("benchmark.address", "bench");
+        }
+        latch.await();
+        consumer.unregister();
+    }
+}

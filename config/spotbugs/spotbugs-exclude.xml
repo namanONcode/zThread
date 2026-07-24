@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!--
+      SpotBugs exclusions for zThread.
+      Excludes false positives common with FFM API and low-level systems code.
+    -->
+
+    <!-- Exclude FFM-related false positives for resource management -->
+    <Match>
+        <Package name="com.namanoncode.zthread.linux.native"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
+
+    <!-- MethodHandle invocations look like dead stores to SpotBugs -->
+    <Match>
+        <Package name="com.namanoncode.zthread.linux.native"/>
+        <Bug pattern="DLS_DEAD_LOCAL_STORE"/>
+    </Match>
+
+    <!-- Intentional use of System.exit in examples -->
+    <Match>
+        <Package name="com.namanoncode.zthread.examples"/>
+        <Bug pattern="DM_EXIT"/>
+    </Match>
+
+    <!-- Benchmark classes don't follow standard patterns -->
+    <Match>
+        <Package name="com.namanoncode.zthread.benchmark"/>
+    </Match>
+
+    <!-- Suppress unread field warnings for padded cache-line fields -->
+    <Match>
+        <Class name="~.*Padded.*"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+
+    <!-- Allow volatile long arrays in ring buffer implementations -->
+    <Match>
+        <Class name="com.namanoncode.zthread.util.MpscRingBuffer"/>
+        <Bug pattern="VO_VOLATILE_REFERENCE_TO_ARRAY"/>
+    </Match>
+</FindBugsFilter>

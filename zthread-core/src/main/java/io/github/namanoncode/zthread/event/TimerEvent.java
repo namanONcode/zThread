@@ -1,0 +1,84 @@
+/*
+ * Copyright (c) 2026 Naman Jain
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Project: zThread
+ * Author: Naman Jain
+ * GitHub: https://github.com/namanoncode/zThread
+ */
+package io.github.namanoncode.zthread.event;
+
+/**
+ * Event fired when a timer expires.
+ *
+ * <p>Backed by a Linux timerfd. The expiration count indicates how many timer
+ * expirations have occurred since the last read (relevant for periodic timers
+ * under high load).
+ *
+ * @see ZEvent
+ */
+public final class TimerEvent implements ZEvent {
+
+  private int timerFd;
+  private long expirationCount;
+  private long timestampNanos;
+
+  /** Creates an uninitialized timer event. */
+  public TimerEvent() {}
+
+  /**
+   * Resets this event with new values.
+   *
+   * @param timerFd the timer file descriptor
+   * @param expirationCount the number of expirations
+   * @return this event for chaining
+   */
+  public TimerEvent reset(int timerFd, long expirationCount) {
+    this.timerFd = timerFd;
+    this.expirationCount = expirationCount;
+    this.timestampNanos = System.nanoTime();
+    return this;
+  }
+
+  /**
+   * Returns the timer file descriptor.
+   *
+   * @return the timerfd
+   */
+  public int timerFd() {
+    return timerFd;
+  }
+
+  /**
+   * Returns the number of timer expirations since the last read.
+   *
+   * <p>For periodic timers under high load, this may be greater than 1 if
+   * multiple expirations occurred before the event loop could process the event.
+   *
+   * @return the expiration count
+   */
+  public long expirationCount() {
+    return expirationCount;
+  }
+
+  @Override
+  public long timestampNanos() {
+    return timestampNanos;
+  }
+
+  @Override
+  public String toString() {
+    return "TimerEvent{fd=" + timerFd + ", expirations=" + expirationCount + "}";
+  }
+}

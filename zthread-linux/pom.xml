@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.namanoncode</groupId>
+        <artifactId>zthread-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>zthread-linux</artifactId>
+    <name>zThread Linux</name>
+    <description>Linux-native implementation of the zThread event runtime using FFM API bindings for epoll, eventfd, timerfd, signalfd, and inotify.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.namanoncode</groupId>
+            <artifactId>zthread-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>4.2.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

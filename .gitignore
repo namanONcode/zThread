@@ -1,0 +1,43 @@
+# Target and Build Output
+target/
+**/target/
+build/
+**/build/
+bin/
+
+# Maven Wrapper
+!.mvn/wrapper/maven-wrapper.jar
+
+# JMH & Benchmark Artifacts
+jmh-result*.json
+jmh-result*.csv
+jmh-result*.txt
+*.log
+
+# Python & Graph Script Output
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# IDE Files
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Logs & Temporary files
+logs/
+*.tmp
