@@ -7,36 +7,53 @@
 
     <!-- Exclude FFM-related false positives for resource management -->
     <Match>
-        <Package name="com.namanoncode.zthread.linux.native"/>
+        <Package name="io.github.namanoncode.zthread.linux.native_"/>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
     </Match>
 
     <!-- MethodHandle invocations look like dead stores to SpotBugs -->
     <Match>
-        <Package name="com.namanoncode.zthread.linux.native"/>
+        <Package name="~io\.github\.namanoncode\.zthread\.linux.*"/>
         <Bug pattern="DLS_DEAD_LOCAL_STORE"/>
     </Match>
 
     <!-- Intentional use of System.exit in examples -->
     <Match>
-        <Package name="com.namanoncode.zthread.examples"/>
+        <Package name="io.github.namanoncode.zthread.examples"/>
         <Bug pattern="DM_EXIT"/>
     </Match>
 
-    <!-- Benchmark classes don't follow standard patterns -->
+    <!-- Benchmark classes don't follow standard patterns (especially JMH generated code) -->
     <Match>
-        <Package name="com.namanoncode.zthread.benchmark"/>
+        <Package name="~io\.github\.namanoncode\.zthread\.benchmark.*"/>
     </Match>
 
     <!-- Suppress unread field warnings for padded cache-line fields -->
     <Match>
-        <Class name="~.*Padded.*"/>
-        <Bug pattern="URF_UNREAD_FIELD"/>
+        <Or>
+            <Class name="~.*Padded.*"/>
+            <Class name="~.*MpscRingBuffer.*"/>
+        </Or>
+        <Or>
+            <Bug pattern="URF_UNREAD_FIELD"/>
+            <Bug pattern="UUF_UNUSED_FIELD"/>
+        </Or>
     </Match>
 
-    <!-- Allow volatile long arrays in ring buffer implementations -->
+    <!-- Allow volatile long arrays and non-atomic ops in ring buffer implementations -->
     <Match>
-        <Class name="com.namanoncode.zthread.util.MpscRingBuffer"/>
-        <Bug pattern="VO_VOLATILE_REFERENCE_TO_ARRAY"/>
+        <Class name="io.github.namanoncode.zthread.util.MpscRingBuffer"/>
+        <Or>
+            <Bug pattern="VO_VOLATILE_REFERENCE_TO_ARRAY"/>
+            <Bug pattern="AT_NONATOMIC_OPERATIONS_ON_SHARED_VARIABLE"/>
+        </Or>
+    </Match>
+
+    <!-- Exclude expose rep warnings globally, zThread intentionally passes mutable references to avoid allocations -->
+    <Match>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
     </Match>
 </FindBugsFilter>

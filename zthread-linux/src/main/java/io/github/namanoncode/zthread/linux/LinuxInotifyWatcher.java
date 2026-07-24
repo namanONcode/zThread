@@ -48,7 +48,6 @@ public final class LinuxInotifyWatcher implements AutoCloseable {
   private final Arena arena;
   private final int inotifyFd;
   private final MemorySegment readBuffer;
-  @SuppressWarnings("PMD.LooseCoupling")
   private final ConcurrentHashMap<Integer, WatchRegistration> watches = new ConcurrentHashMap<>();
 
   public LinuxInotifyWatcher(LinuxEventLoop eventLoop, EventDispatcher dispatcher) {
