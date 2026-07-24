@@ -56,11 +56,5 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Checkstyle
-        run: ./mvnw checkstyle:check --batch-mode --no-transfer-progress
-
-      - name: PMD
-        run: ./mvnw pmd:check --batch-mode --no-transfer-progress
-
-      - name: SpotBugs
-        run: ./mvnw compile spotbugs:check --batch-mode --no-transfer-progress
+      - name: Code Quality Checks
+        run: ./mvnw compile checkstyle:check pmd:check spotbugs:check --batch-mode --no-transfer-progress

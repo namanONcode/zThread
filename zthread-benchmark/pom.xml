@@ -116,6 +116,34 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>benchmark</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <classpathScope>test</classpathScope>
+                            <executable>java</executable>
+                            <arguments>
+                                <argument>-classpath</argument>
+                                <classpath/>
+                                <argument>org.openjdk.jmh.Main</argument>
+                                <argument>-rf</argument>
+                                <argument>json</argument>
+                                <argument>-rff</argument>
+                                <argument>target/benchmark.json</argument>
+                                <argument>-prof</argument>
+                                <argument>gc</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
