@@ -92,7 +92,7 @@
 
         <!-- Test Dependencies -->
         <junit.version>5.11.4</junit.version>
-        <mockito.version>5.15.2</mockito.version>
+        <mockito.version>5.23.0</mockito.version>
         <assertj.version>3.27.7</assertj.version>
 
         <!-- Plugin Versions -->
