@@ -26,7 +26,6 @@ import io.github.namanoncode.zthread.linux.native_.LinuxSyscalls;
 import io.github.namanoncode.zthread.linux.native_.StructLayouts;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

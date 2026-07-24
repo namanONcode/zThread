@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import reactor.core.Disposable;
+import reactor.core.Disposables;
 import reactor.core.scheduler.Scheduler;
 
 /**
@@ -46,10 +47,7 @@ final class ZSchedulerWorker implements Scheduler.Worker {
   @Override
   public Disposable schedule(Runnable task) {
     if (disposed.get()) {
-      return new reactor.core.Disposable() {
-        @Override public void dispose() {}
-        @Override public boolean isDisposed() { return true; }
-      };
+      return Disposables.disposed();
     }
     HandlerRegistration reg = runtime.schedule(task, 0, TimeUnit.NANOSECONDS);
     registrations.add(reg);
@@ -59,10 +57,7 @@ final class ZSchedulerWorker implements Scheduler.Worker {
   @Override
   public Disposable schedule(Runnable task, long delay, TimeUnit unit) {
     if (disposed.get()) {
-      return new reactor.core.Disposable() {
-        @Override public void dispose() {}
-        @Override public boolean isDisposed() { return true; }
-      };
+      return Disposables.disposed();
     }
     HandlerRegistration reg = runtime.schedule(task, delay, unit);
     registrations.add(reg);
@@ -72,10 +67,7 @@ final class ZSchedulerWorker implements Scheduler.Worker {
   @Override
   public Disposable schedulePeriodically(Runnable task, long initialDelay, long period, TimeUnit unit) {
     if (disposed.get()) {
-      return new reactor.core.Disposable() {
-        @Override public void dispose() {}
-        @Override public boolean isDisposed() { return true; }
-      };
+      return Disposables.disposed();
     }
     HandlerRegistration reg = runtime.schedulePeriodic(task, initialDelay, period, unit);
     registrations.add(reg);

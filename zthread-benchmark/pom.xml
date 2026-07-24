@@ -97,7 +97,14 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-            <!-- Skip deploy for benchmark module -->
+            <!-- Skip deploy & checkstyle for benchmark module -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>

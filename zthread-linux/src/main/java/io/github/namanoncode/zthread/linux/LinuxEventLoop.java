@@ -19,11 +19,9 @@
  */
 package io.github.namanoncode.zthread.linux;
 
-import io.github.namanoncode.zthread.DefaultEventDispatcher;
 import io.github.namanoncode.zthread.EventDispatcher;
 import io.github.namanoncode.zthread.EventLoop;
 import io.github.namanoncode.zthread.ZRuntimeConfig;
-import io.github.namanoncode.zthread.event.CustomEvent;
 import io.github.namanoncode.zthread.event.ShutdownEvent;
 import io.github.namanoncode.zthread.exception.NativeException;
 import io.github.namanoncode.zthread.linux.native_.LinuxConstants;

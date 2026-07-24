@@ -49,21 +49,69 @@ public final class MpscRingBuffer {
 
   // Padded producer sequence — each in its own cache line
   @SuppressWarnings("unused")
-  private long p01, p02, p03, p04, p05, p06, p07;
+  private long p01;
+  @SuppressWarnings("unused")
+  private long p02;
+  @SuppressWarnings("unused")
+  private long p03;
+  @SuppressWarnings("unused")
+  private long p04;
+  @SuppressWarnings("unused")
+  private long p05;
+  @SuppressWarnings("unused")
+  private long p06;
+  @SuppressWarnings("unused")
+  private long p07;
 
   private volatile long producerSequence;
 
   @SuppressWarnings("unused")
-  private long p11, p12, p13, p14, p15, p16, p17;
+  private long p11;
+  @SuppressWarnings("unused")
+  private long p12;
+  @SuppressWarnings("unused")
+  private long p13;
+  @SuppressWarnings("unused")
+  private long p14;
+  @SuppressWarnings("unused")
+  private long p15;
+  @SuppressWarnings("unused")
+  private long p16;
+  @SuppressWarnings("unused")
+  private long p17;
 
   // Padded consumer sequence
   @SuppressWarnings("unused")
-  private long p21, p22, p23, p24, p25, p26, p27;
+  private long p21;
+  @SuppressWarnings("unused")
+  private long p22;
+  @SuppressWarnings("unused")
+  private long p23;
+  @SuppressWarnings("unused")
+  private long p24;
+  @SuppressWarnings("unused")
+  private long p25;
+  @SuppressWarnings("unused")
+  private long p26;
+  @SuppressWarnings("unused")
+  private long p27;
 
   private long consumerSequence;
 
   @SuppressWarnings("unused")
-  private long p31, p32, p33, p34, p35, p36, p37;
+  private long p31;
+  @SuppressWarnings("unused")
+  private long p32;
+  @SuppressWarnings("unused")
+  private long p33;
+  @SuppressWarnings("unused")
+  private long p34;
+  @SuppressWarnings("unused")
+  private long p35;
+  @SuppressWarnings("unused")
+  private long p36;
+  @SuppressWarnings("unused")
+  private long p37;
 
   /**
    * Creates a new ring buffer with the given capacity, rounded up to a power of two.

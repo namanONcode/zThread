@@ -25,7 +25,6 @@ import io.github.namanoncode.zthread.handler.EventHandler;
 import io.github.namanoncode.zthread.handler.HandlerRegistration;
 import io.github.namanoncode.zthread.metrics.RuntimeMetrics;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**

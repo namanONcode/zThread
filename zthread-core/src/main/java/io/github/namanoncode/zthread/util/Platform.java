@@ -54,7 +54,7 @@ public final class Platform {
    *
    * @return true if running on x86_64
    */
-  public static boolean isX86_64() {
+  public static boolean isX8664() {
     return OS_ARCH.contains("amd64") || OS_ARCH.contains("x86_64");
   }
 

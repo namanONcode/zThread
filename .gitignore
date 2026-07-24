@@ -4,6 +4,7 @@ target/
 build/
 **/build/
 bin/
+dependency-reduced-pom.xml
 
 # Maven Wrapper
 !.mvn/wrapper/maven-wrapper.jar

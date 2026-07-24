@@ -5,11 +5,24 @@ zThread is an enterprise-grade, production-quality, high-performance event loop 
 
 ## Performance Benchmark
 
-zThread is designed for maximum throughput and minimal allocation overhead. In rigorous single-producer single-consumer (SPSC) event loop benchmarks, zThread achieves **~2x the throughput** of industry-standard alternatives like Netty's NIO EventLoop.
+zThread is designed for maximum throughput and minimal latency. In single-producer single-consumer (SPSC) event loop benchmarks executed with JMH on Linux (JDK 25), zThread achieves **~13.2 Million ops/sec** (~75.7 ns latency per event), outperforming traditional NIO frameworks like Netty (~7.2 M ops/sec) by **1.8x** and Vert.x (~8.3 M ops/sec) by **1.6x**.
 
 ![Benchmark Results](assets/benchmark_graph.svg)
 
-*(Graph auto-updated via GitHub Actions Benchmark CI)*
+*(Graph automatically benchmarked and generated via GitHub Actions CI)*
+
+### Benchmark Breakdown & Latency Matrix
+
+| Framework / Mechanism | Throughput (Higher is better) | Average Latency (Lower is better) | Engine Architecture |
+| :--- | :--- | :--- | :--- |
+| **zThread (Linux FFM / Epoll)** | **~13.21 M ops/sec** | **~75.7 ns / event** | Kernel `epoll` + Lock-free RingBuffer via Panama FFM |
+| **Project Reactor** | ~10.68 M ops/sec | ~93.6 ns / event | RingBuffer-backed Schedulers |
+| **SynchronousQueue** | ~10.34 M ops/sec | ~96.7 ns / event | Dual stack / queue thread handoff |
+| **ArrayBlockingQueue** | ~10.00 M ops/sec | ~100.0 ns / event | ReentrantLock + Condition queues |
+| **LinkedBlockingQueue** | ~9.88 M ops/sec | ~101.2 ns / event | Two-lock queue algorithm |
+| **Vert.x (Event Loop)** | ~8.32 M ops/sec | ~120.2 ns / event | Netty-backed event loop dispatch |
+| **Netty (NIO EventLoop)** | ~7.21 M ops/sec | ~138.7 ns / event | `Selector` + ConcurrentLinkedQueue dispatch |
+| **Java Virtual Threads** | ~1.12 M ops/sec | ~895.2 ns / event | Carrier thread park/unpark overhead |
 
 ## Installation
 
