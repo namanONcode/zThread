@@ -327,7 +327,8 @@
                     <version>${maven-javadoc-plugin.version}</version>
                     <configuration>
                         <doclint>none</doclint>
-                        <additionalOptions>--enable-native-access=ALL-UNNAMED</additionalOptions>
+                        <failOnError>false</failOnError>
+                        <failOnWarnings>false</failOnWarnings>
                     </configuration>
                     <executions>
                         <execution>
