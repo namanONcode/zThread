@@ -83,7 +83,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Dependencies -->
-        <slf4j.version>2.0.16</slf4j.version>
+        <slf4j.version>2.0.18</slf4j.version>
         <logback.version>1.5.16</logback.version>
         <reactor.version>3.7.3</reactor.version>
         <jmh.version>1.37</jmh.version>
