@@ -86,12 +86,11 @@ def main():
     # Styling labels and title
     ax.set_xlabel('Throughput (Million Operations / Sec — Higher is Better)', 
                   fontsize=12, fontweight='bold', color='#e2e8f0', labelpad=12)
-    ax.set_title('Event Loop & Micro-Task Throughput Benchmark', 
-                 fontsize=16, fontweight='bold', color='#ffffff', pad=25)
     
-    # Subtitle annotation
-    fig.text(0.5, 0.91, 'Evaluated using JMH • SPSC Event Passing • JDK 25 Linux', 
-             ha='center', fontsize=11, color='#94a3b8', style='italic')
+    fig.suptitle('Event Loop & Micro-Task Throughput Benchmark', 
+                 fontsize=16, fontweight='bold', color='#ffffff', y=0.96)
+    ax.set_title('Evaluated using JMH • SPSC Event Passing • JDK 25 Linux', 
+                 fontsize=10, color='#94a3b8', style='italic', pad=12)
 
     # Gridlines and spines
     ax.grid(axis='x', linestyle=':', color='#334155', alpha=0.7)
