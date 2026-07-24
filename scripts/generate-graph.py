@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 import json
 import os
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
 def main():
-    json_path = 'jmh-result.json'
+    if len(sys.argv) > 1:
+        json_path = sys.argv[1]
+    else:
+        json_path = 'jmh-result.json'
+        
     output_path = 'assets/benchmark_graph.svg'
+    readme_path = 'README.md'
 
     if not os.path.exists(json_path):
         print(f"File {json_path} not found. Cannot generate graph.")
@@ -124,6 +130,68 @@ def main():
     plt.subplots_adjust(left=0.32, right=0.96, top=0.84, bottom=0.12)
     plt.savefig(output_path, format='svg', facecolor=fig.get_facecolor(), edgecolor='none')
     print(f"Graph successfully generated at {output_path}")
+
+    # --- Update README.md Table ---
+    if not os.path.exists(readme_path):
+        print(f"README file {readme_path} not found. Skipping table update.")
+        return
+
+    # Generate new table content
+    table_lines = [
+        "| Framework / Mechanism | Throughput (Higher is better) | Average Latency (Lower is better) | Engine Architecture |",
+        "| :--- | :--- | :--- | :--- |"
+    ]
+    
+    # Engine architecture mapping
+    arch_map = {
+        'zThread (Linux FFM / Epoll)': 'Kernel `epoll` + Lock-free RingBuffer via Panama FFM',
+        'Project Reactor (Schedulers)': 'RingBuffer-backed Schedulers',
+        'SynchronousQueue': 'Dual stack / queue thread handoff',
+        'ArrayBlockingQueue': 'ReentrantLock + Condition queues',
+        'LinkedBlockingQueue': 'Two-lock queue algorithm',
+        'Vert.x (Event Loop)': 'Netty-backed event loop dispatch',
+        'Netty (NIO EventLoop)': '`Selector` + ConcurrentLinkedQueue dispatch',
+        'Java Virtual Threads (Loom)': 'Carrier thread park/unpark overhead',
+        'ConcurrentLinkedQueue': 'Lock-free queue algorithm'
+    }
+
+    # Sort descending for table (highest score first)
+    sorted_table_data = sorted(zip(scores_m, benchmarks, latencies_ns), reverse=True)
+    
+    for score_m, bench_name, latency_ns in sorted_table_data:
+        arch = arch_map.get(bench_name, "Unknown architecture")
+        
+        # Bold zThread for emphasis
+        if "zThread" in bench_name:
+            bench_display = f"**{bench_name}**"
+            score_display = f"**~{score_m:.2f} M ops/sec**"
+            lat_display = f"**~{latency_ns:.1f} ns / event**"
+        else:
+            bench_display = f"**{bench_name}**"
+            score_display = f"~{score_m:.2f} M ops/sec"
+            lat_display = f"~{latency_ns:.1f} ns / event"
+            
+        table_lines.append(f"| {bench_display} | {score_display} | {lat_display} | {arch} |")
+
+    new_table_str = "\n".join(table_lines) + "\n"
+    
+    # Read README, find markers, and replace
+    with open(readme_path, 'r') as f:
+        content = f.read()
+        
+    start_marker = "<!-- BENCHMARK_TABLE_START -->"
+    end_marker = "<!-- BENCHMARK_TABLE_END -->"
+    
+    start_idx = content.find(start_marker)
+    end_idx = content.find(end_marker)
+    
+    if start_idx != -1 and end_idx != -1:
+        new_content = content[:start_idx + len(start_marker)] + "\n" + new_table_str + content[end_idx:]
+        with open(readme_path, 'w') as f:
+            f.write(new_content)
+        print(f"Table successfully updated in {readme_path}")
+    else:
+        print(f"Markers not found in {readme_path}. Could not update table.")
 
 if __name__ == "__main__":
     main()

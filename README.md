@@ -13,6 +13,7 @@ zThread is designed for maximum throughput and minimal latency. In single-produc
 
 ### Benchmark Breakdown & Latency Matrix
 
+<!-- BENCHMARK_TABLE_START -->
 | Framework / Mechanism | Throughput (Higher is better) | Average Latency (Lower is better) | Engine Architecture |
 | :--- | :--- | :--- | :--- |
 | **zThread (Linux FFM / Epoll)** | **~13.21 M ops/sec** | **~75.7 ns / event** | Kernel `epoll` + Lock-free RingBuffer via Panama FFM |
@@ -23,6 +24,7 @@ zThread is designed for maximum throughput and minimal latency. In single-produc
 | **Vert.x (Event Loop)** | ~8.32 M ops/sec | ~120.2 ns / event | Netty-backed event loop dispatch |
 | **Netty (NIO EventLoop)** | ~7.21 M ops/sec | ~138.7 ns / event | `Selector` + ConcurrentLinkedQueue dispatch |
 | **Java Virtual Threads** | ~1.12 M ops/sec | ~895.2 ns / event | Carrier thread park/unpark overhead |
+<!-- BENCHMARK_TABLE_END -->
 
 ## Installation
 

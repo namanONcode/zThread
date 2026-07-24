@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   benchmark:
@@ -45,8 +45,19 @@ jobs:
 
       - name: Generate Charts and Report
         run: |
+          # Generate benchmark report inside zthread-benchmark
           cd zthread-benchmark
           python scripts/generate_charts.py target/benchmark.json
+          
+          # Generate main README.md graph and update table
+          cd ..
+          python scripts/generate-graph.py zthread-benchmark/target/benchmark.json
+
+      - name: Commit Updated Benchmark Data
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs(benchmark): auto-update performance charts and README"
+          file_pattern: "README.md assets/benchmark_graph.svg zthread-benchmark/charts/* zthread-benchmark/benchmark.md"
 
       - name: Upload Benchmark Results
         uses: actions/upload-artifact@v4
@@ -56,4 +67,5 @@ jobs:
             zthread-benchmark/target/benchmark.json
             zthread-benchmark/charts/
             zthread-benchmark/benchmark.md
+            assets/benchmark_graph.svg
           retention-days: 14

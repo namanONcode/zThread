@@ -32,7 +32,6 @@ jobs:
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Build and Deploy
         run: ./mvnw clean deploy -Prelease --batch-mode --no-transfer-progress
