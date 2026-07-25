@@ -73,7 +73,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install Charting Dependencies
-        run: pip install matplotlib pandas seaborn
+        run: pip install matplotlib pandas seaborn tabulate
 
       - name: Download All Results
         uses: actions/download-artifact@v4
