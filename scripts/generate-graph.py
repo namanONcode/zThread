@@ -39,7 +39,9 @@ def main():
     }
 
     for result in data:
-        full_name = result['benchmark']
+        full_name = result.get('benchmark', '')
+        if 'SpscEventBenchmark' not in full_name:
+            continue
         method_name = full_name.split('.')[-1]
         
         display_name = name_map.get(method_name, method_name)
