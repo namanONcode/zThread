@@ -18,7 +18,7 @@ import java.util.concurrent.locks.LockSupport;
 @State(Scope.Benchmark)
 public class S8_SteadyTrafficBenchmark {
 
-    @Param({"ZTHREAD", "ARRAY_BLOCKING_QUEUE", "THREAD_POOL", "REACTOR", "NETTY", "VERTX"})
+    @Param({"ZTHREAD", "THREAD_POOL", "REACTOR", "NETTY", "VERTX"})
     private S1_S5_ThroughputLatencyBenchmark.Framework framework;
 
     @Param({"1000", "5000", "10000"}) // Target events per second
@@ -33,9 +33,6 @@ public class S8_SteadyTrafficBenchmark {
         switch (framework) {
             case ZTHREAD:
                 adapter = new ZThreadAdapter();
-                break;
-            case ARRAY_BLOCKING_QUEUE:
-                adapter = new BlockingQueueAdapter(new java.util.concurrent.ArrayBlockingQueue<>(10_000));
                 break;
             case THREAD_POOL:
                 adapter = new ExecutorAdapter(Executors.newFixedThreadPool(4));
