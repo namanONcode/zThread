@@ -20,10 +20,7 @@ public class SpscEventBenchmark {
 
     public static final int BATCH_SIZE = 1_000_000;
 
-    // Standard Queues
-    private ArrayBlockingQueue<Object> arrayQueue;
-    private LinkedBlockingQueue<Object> linkedQueue;
-    private ConcurrentLinkedQueue<Object> concurrentQueue;
+    // Standard Queue
     private SynchronousQueue<Object> synchronousQueue;
 
     // Async Runtimes
@@ -44,13 +41,9 @@ public class SpscEventBenchmark {
     private Thread queueConsumerThread;
     private CountDownLatch queueLatch;
     private BlockingQueue<Object> activeBlockingQueue;
-    private ConcurrentLinkedQueue<Object> activeConcurrentQueue;
 
     @Setup(Level.Trial)
     public void setup() {
-        arrayQueue = new ArrayBlockingQueue<>(BATCH_SIZE);
-        linkedQueue = new LinkedBlockingQueue<>(BATCH_SIZE);
-        concurrentQueue = new ConcurrentLinkedQueue<>();
         synchronousQueue = new SynchronousQueue<>();
 
         // Setup zThread with enough buffer for the batch to prevent EventLoopException: buffer full
@@ -110,7 +103,6 @@ public class SpscEventBenchmark {
             queueConsumerThread = null;
         }
         activeBlockingQueue = null;
-        activeConcurrentQueue = null;
     }
 
     private void startBlockingQueueConsumer(BlockingQueue<Object> queue, Blackhole bh) {
@@ -131,39 +123,9 @@ public class SpscEventBenchmark {
         queueConsumerThread.start();
     }
 
-    private void startConcurrentQueueConsumer(ConcurrentLinkedQueue<Object> queue, Blackhole bh) {
-        activeConcurrentQueue = queue;
-        queueConsumerThread = new Thread(() -> {
-            while (running) {
-                Object obj = activeConcurrentQueue.poll();
-                if (obj != null) {
-                    bh.consume(obj);
-                    queueLatch.countDown();
-                }
-            }
-        });
-        queueConsumerThread.start();
-    }
 
-    @Benchmark
-    @OperationsPerInvocation(BATCH_SIZE)
-    public void benchArrayBlockingQueue(Blackhole bh) throws InterruptedException {
-        startBlockingQueueConsumer(arrayQueue, bh);
-        for (int i = 0; i < BATCH_SIZE; i++) {
-            arrayQueue.put(EVENT);
-        }
-        queueLatch.await();
-    }
 
-    @Benchmark
-    @OperationsPerInvocation(BATCH_SIZE)
-    public void benchLinkedBlockingQueue(Blackhole bh) throws InterruptedException {
-        startBlockingQueueConsumer(linkedQueue, bh);
-        for (int i = 0; i < BATCH_SIZE; i++) {
-            linkedQueue.put(EVENT);
-        }
-        queueLatch.await();
-    }
+
 
     @Benchmark
     @OperationsPerInvocation(BATCH_SIZE)
@@ -175,15 +137,7 @@ public class SpscEventBenchmark {
         queueLatch.await();
     }
 
-    @Benchmark
-    @OperationsPerInvocation(BATCH_SIZE)
-    public void benchConcurrentLinkedQueue(Blackhole bh) throws InterruptedException {
-        startConcurrentQueueConsumer(concurrentQueue, bh);
-        for (int i = 0; i < BATCH_SIZE; i++) {
-            concurrentQueue.offer(EVENT);
-        }
-        queueLatch.await();
-    }
+
 
     @Benchmark
     @OperationsPerInvocation(BATCH_SIZE)

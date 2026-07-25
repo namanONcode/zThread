@@ -3,197 +3,261 @@ import json
 import os
 import sys
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 
-def main():
-    if len(sys.argv) > 1:
-        json_path = sys.argv[1]
+# ── Frameworks kept after the ABQ/LBQ/CLQ removal ──────────────────────────
+FRAMEWORKS = [
+    'zThread',
+    'SynchronousQueue',
+    'Netty',
+    'Vert.x',
+    'Reactor',
+    'Virtual Threads',
+]
+
+# SpscEventBenchmark method → display name
+SPSC_NAME_MAP = {
+    'benchZThread':          'zThread',
+    'benchNetty':            'Netty',
+    'benchVertx':            'Vert.x',
+    'benchReactor':          'Reactor',
+    'benchVirtualThreads':   'Virtual Threads',
+    'benchSynchronousQueue': 'SynchronousQueue',
+}
+
+# S1_S5 framework param → display name
+SCALING_NAME_MAP = {
+    'ZTHREAD':          'zThread',
+    'NETTY':            'Netty',
+    'VERTX':            'Vert.x',
+    'REACTOR':          'Reactor',
+    'VIRTUAL_THREADS':  'Virtual Threads',
+    'SYNCHRONOUS_QUEUE':'SynchronousQueue',
+    'THREAD_POOL':      'Thread Pool',
+    'FORK_JOIN':        'Fork/Join',
+}
+
+# README table: full display name → arch description
+FULL_NAME_MAP = {
+    'benchZThread':          'zThread (Linux FFM / Epoll)',
+    'benchNetty':            'Netty (NIO EventLoop)',
+    'benchVertx':            'Vert.x (Event Loop)',
+    'benchReactor':          'Project Reactor (Schedulers)',
+    'benchVirtualThreads':   'Java Virtual Threads (Loom)',
+    'benchSynchronousQueue': 'SynchronousQueue',
+}
+
+ARCH_MAP = {
+    'zThread (Linux FFM / Epoll)':   'Kernel `epoll` + Lock-free RingBuffer via Panama FFM',
+    'Project Reactor (Schedulers)':  'RingBuffer-backed Schedulers',
+    'SynchronousQueue':              'Dual stack / queue thread handoff',
+    'Vert.x (Event Loop)':          'Netty-backed event loop dispatch',
+    'Netty (NIO EventLoop)':        '`Selector` + ConcurrentLinkedQueue dispatch',
+    'Java Virtual Threads (Loom)':  'Carrier thread park/unpark overhead',
+}
+
+# ── Color palette (modern dark-theme) ──────────────────────────────────────
+FRAMEWORK_COLORS = {
+    'zThread':          '#10b981',  # emerald
+    'Netty':            '#38bdf8',  # sky
+    'Vert.x':           '#a78bfa',  # violet
+    'Reactor':          '#fb923c',  # orange
+    'Virtual Threads':  '#f87171',  # rose
+    'SynchronousQueue': '#facc15',  # amber
+    'Thread Pool':      '#34d399',  # teal
+    'Fork/Join':        '#60a5fa',  # blue
+}
+
+BG_COLOR = '#0d1117'
+GRID_COLOR = '#1e293b'
+TEXT_COLOR = '#e2e8f0'
+SUBTLE_COLOR = '#94a3b8'
+
+
+def parse_benchmark_data(data):
+    """Parse merged JMH JSON into SPSC and scaling data dicts keyed by framework display name."""
+    spsc = {}   # { display_name: throughput_ops_s }
+    # scaling: { (display_name, concurrency): throughput_ops_s }
+    scaling_low = {}
+    scaling_high = {}
+
+    for entry in data:
+        name = entry.get('benchmark', '')
+        score = float(entry.get('primaryMetric', {}).get('score', 0))
+
+        if 'SpscEventBenchmark' in name:
+            method = name.split('.')[-1]
+            dname = SPSC_NAME_MAP.get(method)
+            if dname:
+                spsc[dname] = score
+
+        elif 'S1_S5_ThroughputLatencyBenchmark' in name:
+            params = entry.get('params', {})
+            fw_raw = params.get('framework', '')
+            conc = params.get('concurrency', '1:1')
+            dname = SCALING_NAME_MAP.get(fw_raw)
+            if not dname:
+                continue
+            if conc in ('1:1', '4:1'):
+                scaling_low.setdefault(dname, {})[conc] = score
+            elif conc in ('8:1', '16:4', '32:8'):
+                scaling_high.setdefault(dname, {})[conc] = score
+
+    return spsc, scaling_low, scaling_high
+
+
+def draw_radar_chart(spsc, scaling_low, scaling_high, output_path):
+    """Generate a modern dark-theme radar chart with 3 series: SPSC, Scaling-Low, Scaling-High."""
+
+    # Use the intersection of all 3 datasets as axes
+    common_fw = [fw for fw in FRAMEWORKS if fw in spsc]
+    if not common_fw:
+        print("No common frameworks for radar chart.")
+        return
+
+    N = len(common_fw)
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False).tolist()
+    angles += angles[:1]  # close the polygon
+
+    # Collect raw values for each series (average across concurrency levels for scaling)
+    def avg_scaling(scaling_dict, fw):
+        vals = scaling_dict.get(fw, {})
+        return np.mean(list(vals.values())) if vals else 0
+
+    spsc_vals = [spsc.get(fw, 0) for fw in common_fw]
+    slo_vals = [avg_scaling(scaling_low, fw) for fw in common_fw]
+    shi_vals = [avg_scaling(scaling_high, fw) for fw in common_fw]
+
+    # Normalize to 0-1 (percentage of global max) for a balanced radar
+    global_max = max(max(spsc_vals), max(slo_vals), max(shi_vals)) or 1
+    spsc_norm = [v / global_max for v in spsc_vals] + [spsc_vals[0] / global_max]
+    slo_norm = [v / global_max for v in slo_vals] + [slo_vals[0] / global_max]
+    shi_norm = [v / global_max for v in shi_vals] + [shi_vals[0] / global_max]
+
+    # ── Figure ─────────────────────────────────────────────────────────────
+    fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(polar=True), facecolor=BG_COLOR)
+    ax.set_facecolor(BG_COLOR)
+
+    # Series colors & labels
+    series = [
+        (spsc_norm,  '#10b981', 'SPSC Queue (Single Producer → Single Consumer)'),
+        (slo_norm,   '#38bdf8', 'Scaling Low  (1:1 · 4:1)'),
+        (shi_norm,   '#f472b6', 'Scaling High (8:1 · 16:4 · 32:8)'),
+    ]
+
+    for vals, color, label in series:
+        ax.plot(angles, vals, 'o-', linewidth=2.2, color=color, label=label, markersize=6)
+        ax.fill(angles, vals, alpha=0.12, color=color)
+
+    # Axis labels (framework names)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(common_fw, fontsize=12, fontweight='bold', color=TEXT_COLOR)
+
+    # Radial grid
+    ax.set_rlabel_position(30)
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(
+        lambda v, _: f'{v * global_max / 1e6:.0f}M' if v > 0 else ''))
+    ax.tick_params(axis='y', labelsize=9, colors=SUBTLE_COLOR)
+
+    # Grid styling
+    ax.spines['polar'].set_color(GRID_COLOR)
+    ax.grid(color=GRID_COLOR, linewidth=0.8, alpha=0.6)
+
+    # Title
+    fig.suptitle('zThread · Multi-Dimensional Performance Radar',
+                 fontsize=17, fontweight='bold', color='#ffffff', y=0.97)
+    ax.set_title('JMH Benchmark · JDK 25 · Linux',
+                 fontsize=10, color=SUBTLE_COLOR, style='italic', pad=24)
+
+    # Legend
+    legend = ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.14),
+                       ncol=3, fontsize=10, framealpha=0.0,
+                       labelcolor=TEXT_COLOR)
+    for text in legend.get_texts():
+        text.set_color(TEXT_COLOR)
+
+    plt.subplots_adjust(top=0.88, bottom=0.12)
+    os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
+    plt.savefig(output_path, format='svg', facecolor=fig.get_facecolor(), edgecolor='none',
+                bbox_inches='tight', pad_inches=0.3)
+    plt.close()
+    print(f"Radar chart generated at {output_path}")
+
+
+def update_readme_table(spsc, readme_path):
+    """Update the benchmark table in README.md with SPSC results only (6 frameworks)."""
+    if not os.path.exists(readme_path):
+        print(f"README file {readme_path} not found. Skipping table update.")
+        return
+
+    table_lines = [
+        "| Framework / Mechanism | Throughput (Higher is better) | Average Latency (Lower is better) | Engine Architecture |",
+        "| :--- | :--- | :--- | :--- |"
+    ]
+
+    # Build rows sorted by throughput descending
+    rows = []
+    for method, display in FULL_NAME_MAP.items():
+        short = SPSC_NAME_MAP.get(method)
+        if not short or short not in spsc:
+            continue
+        score = spsc[short]
+        score_m = score / 1_000_000
+        latency_ns = (1.0 / score * 1e9) if score > 0 else 0
+        arch = ARCH_MAP.get(display, 'Unknown')
+        rows.append((score_m, display, latency_ns, arch))
+
+    rows.sort(reverse=True)
+
+    for score_m, display, latency_ns, arch in rows:
+        if 'zThread' in display:
+            table_lines.append(
+                f"| **{display}** | **~{score_m:.2f} M ops/sec** | **~{latency_ns:.1f} ns / event** | {arch} |")
+        else:
+            table_lines.append(
+                f"| **{display}** | ~{score_m:.2f} M ops/sec | ~{latency_ns:.1f} ns / event | {arch} |")
+
+    new_table = "\n".join(table_lines) + "\n"
+
+    with open(readme_path, 'r') as f:
+        content = f.read()
+
+    start_marker = "<!-- BENCHMARK_TABLE_START -->"
+    end_marker = "<!-- BENCHMARK_TABLE_END -->"
+    si = content.find(start_marker)
+    ei = content.find(end_marker)
+
+    if si != -1 and ei != -1:
+        new_content = content[:si + len(start_marker)] + "\n" + new_table + content[ei:]
+        with open(readme_path, 'w') as f:
+            f.write(new_content)
+        print(f"Table updated in {readme_path}")
     else:
-        json_path = 'jmh-result.json'
-        
+        print(f"Markers not found in {readme_path}. Skipping table update.")
+
+
+def main():
+    json_path = sys.argv[1] if len(sys.argv) > 1 else 'jmh-result.json'
     output_path = 'assets/benchmark_graph.svg'
     readme_path = 'README.md'
 
     if not os.path.exists(json_path):
-        print(f"File {json_path} not found. Cannot generate graph.")
+        print(f"File {json_path} not found.")
         return
 
     with open(json_path, 'r') as f:
         data = json.load(f)
 
-    benchmarks = []
-    scores = []
-    errors = []
+    spsc, scaling_low, scaling_high = parse_benchmark_data(data)
 
-    # Map method names to clear, descriptive names
-    name_map = {
-        'benchZThread': 'zThread (Linux FFM / Epoll)',
-        'benchNetty': 'Netty (NIO EventLoop)',
-        'benchVertx': 'Vert.x (Event Loop)',
-        'benchReactor': 'Project Reactor (Schedulers)',
-        'benchVirtualThreads': 'Java Virtual Threads (Loom)',
-        'benchArrayBlockingQueue': 'ArrayBlockingQueue',
-        'benchLinkedBlockingQueue': 'LinkedBlockingQueue',
-        'benchConcurrentLinkedQueue': 'ConcurrentLinkedQueue',
-        'benchSynchronousQueue': 'SynchronousQueue'
-    }
-
-    for result in data:
-        full_name = result.get('benchmark', '')
-        if 'SpscEventBenchmark' not in full_name:
-            continue
-        method_name = full_name.split('.')[-1]
-        
-        display_name = name_map.get(method_name, method_name)
-        score = float(result['primaryMetric']['score'])
-        
-        raw_error = result['primaryMetric'].get('scoreError', 0)
-        try:
-            error = float(raw_error)
-            if np.isnan(error):
-                error = 0
-        except:
-            error = 0
-            
-        benchmarks.append(display_name)
-        scores.append(score)
-        errors.append(error)
-
-    if not benchmarks:
-        print("No benchmarks found.")
+    if not spsc:
+        print("No SPSC benchmark data found.")
         return
 
-    # Sort by score ascending (lowest to highest) so highest score is at top of barh chart
-    sorted_data = sorted(zip(scores, benchmarks, errors))
-    scores, benchmarks, errors = zip(*sorted_data)
+    draw_radar_chart(spsc, scaling_low, scaling_high, output_path)
+    update_readme_table(spsc, readme_path)
 
-    # Convert to Millions (ops/sec)
-    scores_m = [s / 1_000_000 for s in scores]
-    errors_m = [e / 1_000_000 for e in errors]
-
-    # Calculate average latency in nanoseconds (1 / ops_sec * 1e9)
-    latencies_ns = [(1.0 / s) * 1e9 if s > 0 else 0 for s in scores]
-
-    # Set up dark theme figure with explicit background color (not transparent)
-    fig, ax = plt.subplots(figsize=(11, 6.5), facecolor='#0d1117')
-    ax.set_facecolor('#0d1117')
-
-    # Color palette
-    colors = []
-    for b in benchmarks:
-        if 'zThread' in b:
-            colors.append('#10b981')  # Vibrant Emerald Green for zThread
-        elif 'Virtual' in b:
-            colors.append('#ef4444')  # Red accent for low-throughput baseline
-        else:
-            colors.append('#38bdf8')  # Bright Sky Blue for other frameworks
-
-    bars = ax.barh(benchmarks, scores_m, xerr=errors_m, color=colors, capsize=4, height=0.55,
-                   error_kw={'ecolor': '#94a3b8', 'linewidth': 1.2})
-
-    # Styling labels and title
-    ax.set_xlabel('Throughput (Million Operations / Sec — Higher is Better)', 
-                  fontsize=12, fontweight='bold', color='#e2e8f0', labelpad=12)
-    
-    fig.suptitle('Event Loop & Micro-Task Throughput Benchmark', 
-                 fontsize=16, fontweight='bold', color='#ffffff', y=0.96)
-    ax.set_title('Evaluated using JMH • SPSC Event Passing • JDK 25 Linux', 
-                 fontsize=10, color='#94a3b8', style='italic', pad=12)
-
-    # Gridlines and spines
-    ax.grid(axis='x', linestyle=':', color='#334155', alpha=0.7)
-    ax.set_axisbelow(True)
-    
-    for spine in ax.spines.values():
-        spine.set_color('#334155')
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-
-    # Tick parameters
-    ax.tick_params(axis='x', colors='#cbd5e1', labelsize=10)
-    ax.tick_params(axis='y', colors='#f8fafc', labelsize=11)
-    
-    # Max score for padding
-    max_score = max(scores_m)
-    ax.set_xlim(0, max_score * 1.35)
-
-    # Add numeric annotation: "13.21 M ops/s (~75.7 ns)"
-    for idx, (bar, score_m, latency_ns) in enumerate(zip(bars, scores_m, latencies_ns)):
-        width = bar.get_width()
-        bench_name = benchmarks[idx]
-        
-        text_color = '#34d399' if 'zThread' in bench_name else '#cbd5e1'
-        font_weight = 'bold' if 'zThread' in bench_name else 'normal'
-        
-        annotation = f'{score_m:.2f} M ops/s ({latency_ns:.1f} ns/op)'
-        ax.text(width + 0.3, bar.get_y() + bar.get_height()/2, annotation, 
-                ha='left', va='center', color=text_color, fontweight=font_weight, fontsize=10)
-
-    plt.subplots_adjust(left=0.32, right=0.96, top=0.84, bottom=0.12)
-    plt.savefig(output_path, format='svg', facecolor=fig.get_facecolor(), edgecolor='none')
-    print(f"Graph successfully generated at {output_path}")
-
-    # --- Update README.md Table ---
-    if not os.path.exists(readme_path):
-        print(f"README file {readme_path} not found. Skipping table update.")
-        return
-
-    # Generate new table content
-    table_lines = [
-        "| Framework / Mechanism | Throughput (Higher is better) | Average Latency (Lower is better) | Engine Architecture |",
-        "| :--- | :--- | :--- | :--- |"
-    ]
-    
-    # Engine architecture mapping
-    arch_map = {
-        'zThread (Linux FFM / Epoll)': 'Kernel `epoll` + Lock-free RingBuffer via Panama FFM',
-        'Project Reactor (Schedulers)': 'RingBuffer-backed Schedulers',
-        'SynchronousQueue': 'Dual stack / queue thread handoff',
-        'ArrayBlockingQueue': 'ReentrantLock + Condition queues',
-        'LinkedBlockingQueue': 'Two-lock queue algorithm',
-        'Vert.x (Event Loop)': 'Netty-backed event loop dispatch',
-        'Netty (NIO EventLoop)': '`Selector` + ConcurrentLinkedQueue dispatch',
-        'Java Virtual Threads (Loom)': 'Carrier thread park/unpark overhead',
-        'ConcurrentLinkedQueue': 'Lock-free queue algorithm'
-    }
-
-    # Sort descending for table (highest score first)
-    sorted_table_data = sorted(zip(scores_m, benchmarks, latencies_ns), reverse=True)
-    
-    for score_m, bench_name, latency_ns in sorted_table_data:
-        arch = arch_map.get(bench_name, "Unknown architecture")
-        
-        # Bold zThread for emphasis
-        if "zThread" in bench_name:
-            bench_display = f"**{bench_name}**"
-            score_display = f"**~{score_m:.2f} M ops/sec**"
-            lat_display = f"**~{latency_ns:.1f} ns / event**"
-        else:
-            bench_display = f"**{bench_name}**"
-            score_display = f"~{score_m:.2f} M ops/sec"
-            lat_display = f"~{latency_ns:.1f} ns / event"
-            
-        table_lines.append(f"| {bench_display} | {score_display} | {lat_display} | {arch} |")
-
-    new_table_str = "\n".join(table_lines) + "\n"
-    
-    # Read README, find markers, and replace
-    with open(readme_path, 'r') as f:
-        content = f.read()
-        
-    start_marker = "<!-- BENCHMARK_TABLE_START -->"
-    end_marker = "<!-- BENCHMARK_TABLE_END -->"
-    
-    start_idx = content.find(start_marker)
-    end_idx = content.find(end_marker)
-    
-    if start_idx != -1 and end_idx != -1:
-        new_content = content[:start_idx + len(start_marker)] + "\n" + new_table_str + content[end_idx:]
-        with open(readme_path, 'w') as f:
-            f.write(new_content)
-        print(f"Table successfully updated in {readme_path}")
-    else:
-        print(f"Markers not found in {readme_path}. Could not update table.")
 
 if __name__ == "__main__":
     main()

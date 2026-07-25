@@ -19,9 +19,6 @@ public class S1_S5_ThroughputLatencyBenchmark {
 
     public enum Framework {
         ZTHREAD,
-        ARRAY_BLOCKING_QUEUE,
-        LINKED_BLOCKING_QUEUE,
-        CONCURRENT_LINKED_QUEUE,
         SYNCHRONOUS_QUEUE,
         THREAD_POOL,
         FORK_JOIN,
@@ -31,7 +28,7 @@ public class S1_S5_ThroughputLatencyBenchmark {
         VERTX
     }
 
-    @Param({"ZTHREAD", "ARRAY_BLOCKING_QUEUE", "LINKED_BLOCKING_QUEUE", "CONCURRENT_LINKED_QUEUE", "SYNCHRONOUS_QUEUE", "THREAD_POOL", "FORK_JOIN", "VIRTUAL_THREADS", "REACTOR", "NETTY", "VERTX"})
+    @Param({"ZTHREAD", "SYNCHRONOUS_QUEUE", "THREAD_POOL", "FORK_JOIN", "VIRTUAL_THREADS", "REACTOR", "NETTY", "VERTX"})
     private Framework framework;
 
     @Param({"64", "256", "1024", "4096"})
@@ -57,15 +54,6 @@ public class S1_S5_ThroughputLatencyBenchmark {
         switch (framework) {
             case ZTHREAD:
                 adapter = new ZThreadAdapter();
-                break;
-            case ARRAY_BLOCKING_QUEUE:
-                adapter = new BlockingQueueAdapter(new ArrayBlockingQueue<>(10_000));
-                break;
-            case LINKED_BLOCKING_QUEUE:
-                adapter = new BlockingQueueAdapter(new LinkedBlockingQueue<>());
-                break;
-            case CONCURRENT_LINKED_QUEUE:
-                adapter = new BlockingQueueAdapter(new LinkedTransferQueue<>()); // Using LinkedTransferQueue as standard unbounded blocking queue
                 break;
             case SYNCHRONOUS_QUEUE:
                 adapter = new BlockingQueueAdapter(new SynchronousQueue<>());
