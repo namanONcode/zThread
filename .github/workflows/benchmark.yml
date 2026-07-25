@@ -41,7 +41,7 @@ jobs:
         run: ./mvnw clean install -DskipTests --batch-mode --no-transfer-progress
 
       - name: Run JMH Benchmarks
-        run: ./mvnw exec:exec -pl zthread-benchmark -Dexec.executable="java" -Dexec.args="-classpath %classpath org.openjdk.jmh.Main -rf json -rff target/benchmark.json -prof gc" --batch-mode
+        run: ./mvnw exec:exec -pl zthread-benchmark -Dexec.executable="java" -Dexec.args="-classpath %classpath org.openjdk.jmh.Main (SpscEventBenchmark|S1_S5_ThroughputLatencyBenchmark) -p payloadSize=64 -rf json -rff target/benchmark.json -prof gc -f 0 -wi 1 -i 2 -r 1s" --batch-mode
 
       - name: Generate Charts and Report
         run: |
