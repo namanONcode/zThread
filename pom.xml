@@ -85,7 +85,7 @@
         <!-- Dependencies -->
         <slf4j.version>2.0.18</slf4j.version>
         <logback.version>1.5.16</logback.version>
-        <reactor.version>3.7.3</reactor.version>
+        <reactor.version>3.8.6</reactor.version>
         <jmh.version>1.37</jmh.version>
         <netty.version>4.1.107.Final</netty.version>
         <vertx.version>4.5.27</vertx.version>
