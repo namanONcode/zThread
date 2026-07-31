@@ -94,7 +94,7 @@ jobs:
           python scripts/generate-graph.py zthread-benchmark/target/benchmark.json
 
       - name: Commit Updated Data
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "docs(benchmark): auto-update performance charts and README"
           file_pattern: "README.md assets/benchmark_graph.svg zthread-benchmark/charts/* zthread-benchmark/benchmark.md"
