@@ -53,7 +53,7 @@ jobs:
           fi
 
       - name: Upload Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-${{ matrix.name }}
           path: zthread-benchmark/target/benchmark-${{ matrix.name }}.json
@@ -76,7 +76,7 @@ jobs:
         run: pip install matplotlib pandas seaborn tabulate
 
       - name: Download All Results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: benchmark-results
           pattern: benchmark-*
@@ -100,7 +100,7 @@ jobs:
           file_pattern: "README.md assets/benchmark_graph.svg zthread-benchmark/charts/* zthread-benchmark/benchmark.md"
 
       - name: Upload Final Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-report
           path: |
