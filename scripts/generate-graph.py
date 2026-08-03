@@ -107,82 +107,59 @@ def parse_benchmark_data(data):
     return spsc, scaling_low, scaling_high
 
 
-def draw_radar_chart(spsc, scaling_low, scaling_high, output_path):
-    """Generate a modern dark-theme radar chart with 3 series: SPSC, Scaling-Low, Scaling-High."""
+def draw_bar_chart(spsc, output_path):
+    """Generate a modern dark-theme horizontal bar chart for SPSC throughput."""
+    # Sort frameworks by throughput ascending for horizontal bar chart
+    sorted_items = sorted(spsc.items(), key=lambda x: x[1])
+    frameworks = [item[0] for item in sorted_items]
+    scores = [item[1] for item in sorted_items]
 
-    # Use the intersection of all 3 datasets as axes
-    common_fw = [fw for fw in FRAMEWORKS if fw in spsc]
-    if not common_fw:
-        print("No common frameworks for radar chart.")
-        return
-
-    N = len(common_fw)
-    angles = np.linspace(0, 2 * np.pi, N, endpoint=False).tolist()
-    angles += angles[:1]  # close the polygon
-
-    # Collect raw values for each series (average across concurrency levels for scaling)
-    def avg_scaling(scaling_dict, fw):
-        vals = scaling_dict.get(fw, {})
-        return np.mean(list(vals.values())) if vals else 0
-
-    spsc_vals = [spsc.get(fw, 0) for fw in common_fw]
-    slo_vals = [avg_scaling(scaling_low, fw) for fw in common_fw]
-    shi_vals = [avg_scaling(scaling_high, fw) for fw in common_fw]
-
-    # Normalize to 0-1 (percentage of global max) for a balanced radar
-    global_max = max(max(spsc_vals), max(slo_vals), max(shi_vals)) or 1
-    spsc_norm = [v / global_max for v in spsc_vals] + [spsc_vals[0] / global_max]
-    slo_norm = [v / global_max for v in slo_vals] + [slo_vals[0] / global_max]
-    shi_norm = [v / global_max for v in shi_vals] + [shi_vals[0] / global_max]
-
-    # ── Figure ─────────────────────────────────────────────────────────────
-    fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(polar=True), facecolor=BG_COLOR)
+    fig, ax = plt.subplots(figsize=(10, 6), facecolor=BG_COLOR)
     ax.set_facecolor(BG_COLOR)
 
-    # Series colors & labels
-    series = [
-        (spsc_norm,  '#10b981', 'SPSC Queue (Single Producer → Single Consumer)'),
-        (slo_norm,   '#38bdf8', 'Scaling Low  (1:1 · 4:1)'),
-        (shi_norm,   '#f472b6', 'Scaling High (8:1 · 16:4 · 32:8)'),
-    ]
+    # Plot bars
+    y_pos = np.arange(len(frameworks))
+    colors = [FRAMEWORK_COLORS.get(fw, '#38bdf8') for fw in frameworks]
+    
+    bars = ax.barh(y_pos, scores, color=colors, height=0.6, alpha=0.9)
+    
+    # Grid and styling
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(frameworks, fontsize=12, fontweight='bold', color=TEXT_COLOR)
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f'{v / 1e6:.1f}M'))
+    ax.tick_params(axis='x', colors=SUBTLE_COLOR, labelsize=11)
+    ax.tick_params(axis='y', colors=TEXT_COLOR, length=0)
+    
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_color(GRID_COLOR)
+    
+    ax.xaxis.grid(True, color=GRID_COLOR, linestyle='--', alpha=0.7)
+    ax.set_axisbelow(True)
 
-    for vals, color, label in series:
-        ax.plot(angles, vals, 'o-', linewidth=2.2, color=color, label=label, markersize=6)
-        ax.fill(angles, vals, alpha=0.12, color=color)
-
-    # Axis labels (framework names)
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(common_fw, fontsize=12, fontweight='bold', color=TEXT_COLOR)
-
-    # Radial grid
-    ax.set_rlabel_position(30)
-    ax.yaxis.set_major_formatter(mticker.FuncFormatter(
-        lambda v, _: f'{v * global_max / 1e6:.0f}M' if v > 0 else ''))
-    ax.tick_params(axis='y', labelsize=9, colors=SUBTLE_COLOR)
-
-    # Grid styling
-    ax.spines['polar'].set_color(GRID_COLOR)
-    ax.grid(color=GRID_COLOR, linewidth=0.8, alpha=0.6)
+    # Value labels on bars
+    for bar in bars:
+        width = bar.get_width()
+        label_x = width - (max(scores) * 0.05) if width > (max(scores) * 0.15) else width + (max(scores) * 0.02)
+        align = 'right' if width > (max(scores) * 0.15) else 'left'
+        color = '#ffffff' if align == 'right' else TEXT_COLOR
+        
+        ax.text(label_x, bar.get_y() + bar.get_height()/2, 
+                f'{width / 1e6:.1f} M ops/sec',
+                va='center', ha=align, color=color, fontweight='bold', fontsize=11)
 
     # Title
-    fig.suptitle('zThread · Multi-Dimensional Performance Radar',
-                 fontsize=17, fontweight='bold', color='#ffffff', y=0.97)
-    ax.set_title('JMH Benchmark · JDK 25 · Linux',
-                 fontsize=10, color=SUBTLE_COLOR, style='italic', pad=24)
+    fig.suptitle('Throughput (Operations / sec)', fontsize=16, fontweight='bold', color='#ffffff', y=0.96)
+    ax.set_title('Single-Producer Single-Consumer (Higher is better) · JDK 25 · Linux', 
+                 fontsize=11, color=SUBTLE_COLOR, style='italic', pad=15)
 
-    # Legend
-    legend = ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.14),
-                       ncol=3, fontsize=10, framealpha=0.0,
-                       labelcolor=TEXT_COLOR)
-    for text in legend.get_texts():
-        text.set_color(TEXT_COLOR)
-
-    plt.subplots_adjust(top=0.88, bottom=0.12)
+    plt.subplots_adjust(top=0.85, bottom=0.1)
     os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
     plt.savefig(output_path, format='svg', facecolor=fig.get_facecolor(), edgecolor='none',
                 bbox_inches='tight', pad_inches=0.3)
     plt.close()
-    print(f"Radar chart generated at {output_path}")
+    print(f"Bar chart generated at {output_path}")
 
 
 def update_readme_table(spsc, readme_path):
@@ -255,7 +232,7 @@ def main():
         print("No SPSC benchmark data found.")
         return
 
-    draw_radar_chart(spsc, scaling_low, scaling_high, output_path)
+    draw_bar_chart(spsc, output_path)
     update_readme_table(spsc, readme_path)
 
 

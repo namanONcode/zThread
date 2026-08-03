@@ -1,28 +1,76 @@
 # zThread
-> A Linux-native Event Runtime for Java providing near-zero idle CPU utilization using kernel event mechanisms (epoll, eventfd, timerfd, signalfd, inotify).
 
-zThread is an enterprise-grade, production-quality, high-performance event loop framework tailored exclusively for Linux. By leveraging `epoll`, `eventfd`, and FFM (Foreign Function & Memory API) directly, zThread eliminates the JVM busy-spin overhead and provides an ultra-low latency event dispatch model that sleeps inside the kernel and wakes only when work exists.
+[![CI](https://github.com/namanONcode/zThread/actions/workflows/ci.yml/badge.svg)](https://github.com/namanONcode/zThread/actions/workflows/ci.yml)
+[![Java 25](https://img.shields.io/badge/Java-25-blue.svg?logo=openjdk)](https://openjdk.org/projects/jdk/25/)
+[![Linux Native](https://img.shields.io/badge/Linux-Native-FCC624?logo=linux&logoColor=black)]()
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.namanoncode/zthread-core.svg)](https://central.sonatype.com/artifact/io.github.namanoncode/zthread-core)
+[![License](https://img.shields.io/github/license/namanONcode/zThread)](LICENSE)
 
-## Performance Benchmark
+> Millions of events. Near-zero idle CPU. One event loop.
 
-zThread is designed for maximum throughput and minimal latency. In single-producer single-consumer (SPSC) event loop benchmarks executed with JMH on Linux (JDK 25), zThread achieves **~13.2 Million ops/sec** (~75.7 ns latency per event), outperforming traditional NIO frameworks like Netty (~7.2 M ops/sec) by **1.8x** and Vert.x (~8.3 M ops/sec) by **1.6x**.
+A Linux-native event runtime for Java that sleeps inside `epoll_wait()` instead of busy-spinning, enabling millions of events with near-zero idle CPU.
+
+## The Problem
+
+Traditional Java servers often rely on:
+* Thread-per-connection
+* Busy polling
+* High idle CPU
+* Context switching
+
+zThread uses Linux `epoll` directly so your application sleeps until the kernel has actual work.
+
+## Hello World
+
+```java
+ZRuntime runtime = ZRuntime.builder().build();
+
+runtime.on(SocketEvent.class, event -> {
+    System.out.println("Connected");
+});
+
+runtime.start();
+```
+
+## Architecture
+
+```mermaid
+graph TD
+    Client -->|Network| LinuxKernel[Linux Kernel]
+    LinuxKernel -->|epoll_wait| EventLoop[zThread Event Loop]
+    EventLoop --> Dispatcher
+    Dispatcher --> JavaHandler[Java Handler]
+    JavaHandler --> Application
+```
+
+## Performance
 
 ![Benchmark Results](assets/benchmark_graph.svg)
-
-*(Graph automatically benchmarked and generated via GitHub Actions CI)*
+*(Benchmarks executed with JMH on Linux, JDK 25. Graph generated via GitHub Actions CI)*
 
 ### Benchmark Breakdown & Latency Matrix
 
 <!-- BENCHMARK_TABLE_START -->
 | Framework / Mechanism | Throughput (Higher is better) | Average Latency (Lower is better) | Engine Architecture |
 | :--- | :--- | :--- | :--- |
-| **zThread (Linux FFM / Epoll)** | **~9.79 M ops/sec** | **~102.1 ns / event** | Kernel `epoll` + Lock-free RingBuffer via Panama FFM |
-| **Project Reactor (Schedulers)** | ~7.91 M ops/sec | ~126.4 ns / event | RingBuffer-backed Schedulers |
-| **Netty (NIO EventLoop)** | ~6.39 M ops/sec | ~156.5 ns / event | `Selector` + ConcurrentLinkedQueue dispatch |
-| **Vert.x (Event Loop)** | ~6.13 M ops/sec | ~163.1 ns / event | Netty-backed event loop dispatch |
-| **Java Virtual Threads (Loom)** | ~4.48 M ops/sec | ~223.4 ns / event | Carrier thread park/unpark overhead |
-| **SynchronousQueue** | ~1.36 M ops/sec | ~735.2 ns / event | Dual stack / queue thread handoff |
+| **zThread (Linux FFM / Epoll)** | **~13.21 M ops/sec** | **~75.7 ns / event** | Kernel `epoll` + Lock-free RingBuffer via Panama FFM |
+| **Project Reactor (Schedulers)** | ~10.68 M ops/sec | ~93.6 ns / event | RingBuffer-backed Schedulers |
+| **SynchronousQueue** | ~10.34 M ops/sec | ~96.7 ns / event | Dual stack / queue thread handoff |
+| **Vert.x (Event Loop)** | ~8.32 M ops/sec | ~120.2 ns / event | Netty-backed event loop dispatch |
+| **Netty (NIO EventLoop)** | ~7.21 M ops/sec | ~138.7 ns / event | `Selector` + ConcurrentLinkedQueue dispatch |
+| **Java Virtual Threads (Loom)** | ~1.12 M ops/sec | ~895.2 ns / event | Carrier thread park/unpark overhead |
 <!-- BENCHMARK_TABLE_END -->
+
+## Feature Comparison
+
+| Feature | zThread | Netty | Virtual Threads |
+| :--- | :--- | :--- | :--- |
+| epoll | ✅ | ✅ | JVM |
+| eventfd | ✅ | ❌ | ❌ |
+| timerfd | ✅ | ❌ | ❌ |
+| signalfd | ✅ | ❌ | ❌ |
+| inotify | ✅ | ❌ | ❌ |
+| Single Event Loop | ✅ | ✅ | ❌ |
 
 ## Installation
 
@@ -39,51 +87,11 @@ Add the `zthread-linux` dependency to your `pom.xml`:
 ```
 
 > [!IMPORTANT]  
-> Because zThread heavily utilizes the **Foreign Function & Memory API (FFM)** for near-zero allocation and native Linux syscalls, you **must** run your JVM with `--enable-native-access=ALL-UNNAMED` and require Java 21+ (Java 25 is currently targeted in the project). We also recommend using ZGC (`-XX:+UseZGC`).
+> Because zThread utilizes the Foreign Function & Memory API (FFM) for native Linux syscalls, you must run your JVM with `--enable-native-access=ALL-UNNAMED` and require Java 21+ (Java 25 is currently targeted in the project). We also recommend using ZGC (`-XX:+UseZGC`).
 
-## Getting Started
+## Reactor Integration (Optional)
 
-zThread is incredibly simple to embed.
-
-### 1. Create and Configure the Runtime
-Use the builder pattern to configure your core event loop limits and behaviors:
-
-```java
-import io.github.namanoncode.zthread.ZRuntime;
-import io.github.namanoncode.zthread.event.CustomEvent;
-
-public class App {
-    public static void main(String[] args) throws InterruptedException {
-        // 1. Initialize Runtime
-        ZRuntime runtime = ZRuntime.builder()
-            .threadName("zthread-worker-1")
-            .bufferSize(8192)          // Size of the lock-free MPSC ring buffer
-            .metricsEnabled(true)
-            .build();
-
-        // 2. Register Event Handlers
-        runtime.on(CustomEvent.class, event -> {
-            System.out.println("Received event: " + event.payload());
-        });
-
-        // 3. Start the Event Loop
-        runtime.start();
-
-        // 4. Post Events (from any thread)
-        // This executes a lock-free ring buffer insertion. 
-        // We also provide tryPost() for non-throwing backpressure handling.
-        runtime.post(new CustomEvent("Hello from main thread!"));
-
-        // Graceful shutdown
-        Thread.sleep(100);
-        runtime.shutdown();
-    }
-}
-```
-
-### Reactor Integration (Optional)
-
-If you're building reactive applications, you can bridge zThread with Project Reactor streams seamlessly:
+If you are building reactive applications, you can bridge zThread with Project Reactor streams:
 
 ```xml
 <dependency>
@@ -100,6 +108,8 @@ ZEventFlux.fromRuntime(runtime, CustomEvent.class)
     .subscribe(payload -> System.out.println("Reactive Payload: " + payload));
 ```
 
-## Contributing
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up the repository locally.
+## Documentation & Contributing
 
+Full documentation, including API references, architecture deep-dives, and contribution guidelines, is available in the [zThread GitHub Wiki](https://github.com/namanONcode/zThread/wiki).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up the repository locally.
