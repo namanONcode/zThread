@@ -66,6 +66,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.AUTO_COMMIT_PAT || github.token }}
 
       - name: Set up Python
         uses: actions/setup-python@v7
