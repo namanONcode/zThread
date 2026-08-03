@@ -91,7 +91,7 @@
         <vertx.version>4.5.27</vertx.version>
 
         <!-- Test Dependencies -->
-        <junit.version>5.11.4</junit.version>
+        <junit.version>6.1.2</junit.version>
         <mockito.version>5.23.0</mockito.version>
         <assertj.version>3.27.7</assertj.version>
 
