@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
 @Fork(value = 1, jvmArgsAppend = {"--enable-native-access=ALL-UNNAMED", "-XX:+UseZGC"})
 public class ScalingMatrixBenchmark {
 
-    @Param({"1:1", "4:1", "8:1", "16:1", "32:1"})
+    @Param({"1:1", "8:1", "32:1"})
     public String concurrency;
 
-    @Param({"64", "512", "4096", "65536", "1048576"})
+    @Param({"64", "4096", "1048576"})
     public int payloadSize;
 
     private EventRuntimeAdapter runtime;

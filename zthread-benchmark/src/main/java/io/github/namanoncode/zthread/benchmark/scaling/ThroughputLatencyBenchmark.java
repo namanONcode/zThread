@@ -28,14 +28,14 @@ public class ThroughputLatencyBenchmark {
         VERTX
     }
 
-    @Param({"ZTHREAD", "SYNCHRONOUS_QUEUE", "THREAD_POOL", "FORK_JOIN", "VIRTUAL_THREADS", "REACTOR", "NETTY", "VERTX"})
+    @Param({"ZTHREAD", "VIRTUAL_THREADS", "NETTY", "VERTX"})
     private Framework framework;
 
-    @Param({"64", "256", "1024", "4096"})
+    @Param({"64", "1024"})
     private int payloadSize;
 
     // Concurrency combinations: "Producers:Consumers"
-    @Param({"1:1", "4:1", "8:1", "16:4", "32:8"})
+    @Param({"1:1", "8:1", "32:8"})
     private String concurrency;
 
     private int producers;
