@@ -1,7 +1,7 @@
 package io.github.namanoncode.zthread.benchmark.idle;
 
 import io.github.namanoncode.zthread.benchmark.adapters.EventHandler;
-import io.github.namanoncode.zthread.benchmark.framework.adapter.*;
+import io.github.namanoncode.zthread.benchmark.adapters.*;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.*;
@@ -12,10 +12,12 @@ import java.util.concurrent.*;
 @Measurement(iterations = 3, batchSize = 1) // 3 iterations of 1 second each
 @Fork(1)
 @State(Scope.Benchmark)
-public class S6_IdleRuntimeBenchmark {
+public class ScenariosIdleBenchmark {
+
+    public enum Framework { ZTHREAD, THREAD_POOL, REACTOR, NETTY, VERTX }
 
     @Param({"ZTHREAD", "THREAD_POOL", "REACTOR", "NETTY", "VERTX"})
-    private S1_S5_ThroughputLatencyBenchmark.Framework framework;
+    private Framework framework;
 
     private EventRuntimeAdapter adapter;
 

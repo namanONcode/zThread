@@ -2,7 +2,7 @@ package io.github.namanoncode.zthread.benchmark.scaling;
 
 import io.github.namanoncode.zthread.benchmark.adapters.BenchmarkEvent;
 import io.github.namanoncode.zthread.benchmark.adapters.EventHandler;
-import io.github.namanoncode.zthread.benchmark.framework.adapter.*;
+import io.github.namanoncode.zthread.benchmark.adapters.*;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Measurement(iterations = 5, time = 2, timeUnit = TimeUnit.SECONDS)
 @Fork(1)
 @State(Scope.Benchmark)
-public class S1_S5_ThroughputLatencyBenchmark {
+public class ThroughputLatencyBenchmark {
 
     public enum Framework {
         ZTHREAD,

@@ -24,12 +24,12 @@ public class ScalingMatrixBenchmark {
     @Setup(Level.Trial)
     public void setup() {
         runtime = new ZThreadAdapter(); // In reality, we use @Param for framework too
-        runtime.setup();
+        runtime.start(event -> {}, 1);
     }
 
     @TearDown(Level.Trial)
     public void teardown() {
-        runtime.teardown();
+        runtime.shutdown();
     }
 
     @Benchmark

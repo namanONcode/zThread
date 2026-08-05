@@ -2,7 +2,7 @@ package io.github.namanoncode.zthread.benchmark.throughput;
 
 import io.github.namanoncode.zthread.benchmark.adapters.BenchmarkEvent;
 import io.github.namanoncode.zthread.benchmark.adapters.EventHandler;
-import io.github.namanoncode.zthread.benchmark.adapters.adapter.*;
+import io.github.namanoncode.zthread.benchmark.adapters.*;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.CountDownLatch;
@@ -16,10 +16,12 @@ import java.util.concurrent.locks.LockSupport;
 @Measurement(iterations = 5, batchSize = 1)
 @Fork(1)
 @State(Scope.Benchmark)
-public class S7_BurstTrafficBenchmark {
+public class BurstTrafficBenchmark {
+
+    public enum Framework { ZTHREAD, THREAD_POOL, REACTOR, NETTY, VERTX }
 
     @Param({"ZTHREAD", "THREAD_POOL", "REACTOR", "NETTY", "VERTX"})
-    private S1_S5_ThroughputLatencyBenchmark.Framework framework;
+    private Framework framework;
 
     @Param({"1000000"})
     private int burstSize;

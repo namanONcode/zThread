@@ -14,7 +14,7 @@ import java.util.concurrent.*;
 @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
 @Fork(1)
 @State(Scope.Benchmark)
-public class S10_SchedulerBenchmark {
+public class SchedulerBenchmark {
 
     public enum TimerFramework {
         ZTHREAD,
