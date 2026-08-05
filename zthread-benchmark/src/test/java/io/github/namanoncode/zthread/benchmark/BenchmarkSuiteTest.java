@@ -26,6 +26,7 @@ public class BenchmarkSuiteTest {
             CustomIdleBenchmarkHarness.runBenchmark();
         } else {
             // Run JMH suite based on package name
+            java.nio.file.Files.createDirectories(java.nio.file.Paths.get("target/benchmark-results"));
             Options opt = new OptionsBuilder()
                     .include("io.github.namanoncode.zthread.benchmark." + suite + ".*")
                     .resultFormat(ResultFormatType.JSON)
