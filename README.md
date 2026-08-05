@@ -45,8 +45,19 @@ graph TD
 
 ## Performance
 
-![Benchmark Results](assets/benchmark_graph.svg)
-*(Benchmarks executed with JMH on Linux, JDK 25. Graph generated via GitHub Actions CI)*
+*(Benchmarks executed with JMH on Linux, JDK 25. Graphs generated automatically via GitHub Actions CI)*
+
+### Core Throughput & Latency
+<p align="center">
+  <img src="assets/benchmarks/throughput_chart.svg" width="48%" alt="Throughput Benchmark">
+  <img src="assets/benchmarks/latency_distribution.svg" width="48%" alt="Latency Benchmark">
+</p>
+
+### Scaling Matrix & Idle Efficiency
+<p align="center">
+  <img src="assets/benchmarks/scaling_matrix.svg" width="48%" alt="Scaling Benchmark">
+  <img src="assets/benchmarks/idle_cpu.svg" width="48%" alt="Idle CPU Benchmark">
+</p>
 
 ### Benchmark Breakdown & Latency Matrix
 
