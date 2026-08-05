@@ -64,12 +64,12 @@ graph TD
 <!-- BENCHMARK_TABLE_START -->
 | Framework / Mechanism | Throughput (Higher is better) | Average Latency (Lower is better) | Engine Architecture |
 | :--- | :--- | :--- | :--- |
-| **zThread (Linux FFM / Epoll)** | **~13.21 M ops/sec** | **~75.7 ns / event** | Kernel `epoll` + Lock-free RingBuffer via Panama FFM |
-| **Project Reactor (Schedulers)** | ~10.68 M ops/sec | ~93.6 ns / event | RingBuffer-backed Schedulers |
-| **SynchronousQueue** | ~10.34 M ops/sec | ~96.7 ns / event | Dual stack / queue thread handoff |
-| **Vert.x (Event Loop)** | ~8.32 M ops/sec | ~120.2 ns / event | Netty-backed event loop dispatch |
-| **Netty (NIO EventLoop)** | ~7.21 M ops/sec | ~138.7 ns / event | `Selector` + ConcurrentLinkedQueue dispatch |
-| **Java Virtual Threads (Loom)** | ~1.12 M ops/sec | ~895.2 ns / event | Carrier thread park/unpark overhead |
+| **zThread (Linux FFM / Epoll)** | **~9.19 M ops/sec** | **~108.9 ns / event** | Kernel `epoll` + Lock-free RingBuffer via Panama FFM |
+| **Netty (NIO EventLoop)** | ~7.56 M ops/sec | ~132.3 ns / event | `Selector` + ConcurrentLinkedQueue dispatch |
+| **Project Reactor (Schedulers)** | ~7.51 M ops/sec | ~133.2 ns / event | RingBuffer-backed Schedulers |
+| **SynchronousQueue** | ~6.81 M ops/sec | ~146.9 ns / event | Dual stack / queue thread handoff |
+| **Vert.x (Event Loop)** | ~5.64 M ops/sec | ~177.2 ns / event | Netty-backed event loop dispatch |
+| **Java Virtual Threads (Loom)** | ~4.23 M ops/sec | ~236.2 ns / event | Carrier thread park/unpark overhead |
 <!-- BENCHMARK_TABLE_END -->
 
 ## Feature Comparison
