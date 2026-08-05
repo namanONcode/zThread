@@ -12,8 +12,8 @@ import java.util.concurrent.locks.LockSupport;
 
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Warmup(iterations = 3, batchSize = 1)
-@Measurement(iterations = 5, batchSize = 1)
+@Warmup(iterations = 2, batchSize = 1)
+@Measurement(iterations = 3, batchSize = 1)
 @Fork(1)
 @State(Scope.Benchmark)
 public class BurstTrafficBenchmark {

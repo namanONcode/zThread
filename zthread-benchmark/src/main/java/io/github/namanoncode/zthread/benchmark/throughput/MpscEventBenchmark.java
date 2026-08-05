@@ -13,8 +13,8 @@ import reactor.core.scheduler.Schedulers;
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 3, time = 2)
-@Measurement(iterations = 5, time = 3)
+@Warmup(iterations = 2, time = 1)
+@Measurement(iterations = 3, time = 2)
 @Fork(value = 1, jvmArgsAppend = {"--enable-native-access=ALL-UNNAMED", "-XX:+UseZGC"})
 public class MpscEventBenchmark {
 
