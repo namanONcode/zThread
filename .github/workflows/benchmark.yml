@@ -11,6 +11,8 @@ jobs:
   # Job 1: Isolated Matrix Microbenchmarks (Parallel)
   microbenchmarks:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         suite: [throughput, latency, memory, timers, eventfd, inotify, lifecycle]
@@ -23,17 +25,19 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
       - name: Run Microbenchmark Suite
-        run: ./mvnw test -pl zthread-benchmark -Dbenchmark.suite=${{ matrix.suite }} -DargLine="--enable-native-access=ALL-UNNAMED -XX:+UseZGC"
+        run: ./mvnw test -pl zthread-benchmark --also-make -DskipTests=false -Dbenchmark.suite=${{ matrix.suite }}
         continue-on-error: true
       - name: Upload Benchmark JSON Artifact
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-${{ matrix.suite }}
-          path: target/benchmark-results/*.json
+          path: zthread-benchmark/target/benchmark-results/*.json
 
   # Job 2: Heavy Application & Scalability Benchmarks (Sequential / Dedicated)
   application-benchmarks:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: microbenchmarks
     steps:
       - uses: actions/checkout@v4
@@ -46,21 +50,23 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y wrk sysstat iperf
       - name: Run Sequential Heavy Benchmarks (Socket, HTTP, WebSocket, Scaling, Idle)
         run: |
-          ./mvnw test -pl zthread-benchmark -Dbenchmark.suite=socket
-          ./mvnw test -pl zthread-benchmark -Dbenchmark.suite=http
-          ./mvnw test -pl zthread-benchmark -Dbenchmark.suite=websocket
-          ./mvnw test -pl zthread-benchmark -Dbenchmark.suite=scaling
-          ./mvnw test -pl zthread-benchmark -Dbenchmark.suite=idle
+          ./mvnw test -pl zthread-benchmark --also-make -DskipTests=false -Dbenchmark.suite=socket
+          ./mvnw test -pl zthread-benchmark --also-make -DskipTests=false -Dbenchmark.suite=http
+          ./mvnw test -pl zthread-benchmark --also-make -DskipTests=false -Dbenchmark.suite=websocket
+          ./mvnw test -pl zthread-benchmark --also-make -DskipTests=false -Dbenchmark.suite=scaling
+          ./mvnw test -pl zthread-benchmark --also-make -DskipTests=false -Dbenchmark.suite=idle
         continue-on-error: true
       - name: Upload Heavy Benchmark Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-heavy
-          path: target/benchmark-results/*.json
+          path: zthread-benchmark/target/benchmark-results/*.json
 
   # Job 3: Generate Dashboard, Visual Charts & Update README
   dashboard-update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [microbenchmarks, application-benchmarks]
     if: github.ref == 'refs/heads/master'
     steps:
