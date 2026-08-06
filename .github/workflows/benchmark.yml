@@ -1,8 +1,6 @@
 name: zThread Continuous Performance Benchmark Suite
 
 on:
-  push:
-    branches: [ master ]
   workflow_dispatch:
 
 jobs:
