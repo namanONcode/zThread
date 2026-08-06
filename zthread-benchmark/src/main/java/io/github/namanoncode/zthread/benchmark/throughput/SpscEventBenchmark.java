@@ -205,7 +205,9 @@ public class SpscEventBenchmark {
     @OperationsPerInvocation(BATCH_SIZE)
     public void benchVertx(Blackhole bh) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
-        io.vertx.core.eventbus.MessageConsumer<Object> consumer = vertx.eventBus().localConsumer("benchmark.address", msg -> {
+        io.vertx.core.eventbus.MessageConsumer<Object> consumer = vertx.eventBus().localConsumer("benchmark.address");
+        consumer.setMaxBufferedMessages(10_000_000);
+        consumer.handler(msg -> {
             bh.consume(msg.body());
             latch.countDown();
         });
@@ -219,6 +221,6 @@ public class SpscEventBenchmark {
             vertx.eventBus().send("benchmark.address", "bench");
         }
         latch.await();
-        consumer.unregister();
+        consumer.unregister().toCompletionStage().toCompletableFuture().join();
     }
 }

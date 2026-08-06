@@ -278,26 +278,4 @@ public class MpscEventBenchmark {
         latch.await();
     }
 
-    @Benchmark
-    @OperationsPerInvocation(BATCH_SIZE)
-    public void benchVertx(Blackhole bh) throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
-        io.vertx.core.eventbus.MessageConsumer<Object> consumer = vertx.eventBus().localConsumer("benchmark.address", msg -> {
-            bh.consume(msg.body());
-            latch.countDown();
-        });
-
-        // Wait for consumer to be registered to avoid dropping messages
-        CountDownLatch regLatch = new CountDownLatch(1);
-        consumer.completionHandler(res -> regLatch.countDown());
-        regLatch.await();
-
-        runProducers(() -> {
-            for (int i = 0; i < EVENTS_PER_PRODUCER; i++) {
-                vertx.eventBus().send("benchmark.address", EVENT);
-            }
-        });
-        latch.await();
-        consumer.unregister();
-    }
 }

@@ -110,18 +110,13 @@ public class MpmcEventBenchmark {
         activeConcurrentQueue = null;
     }
 
-    private void runProducers(Runnable producerTask) throws InterruptedException {
-        CountDownLatch producersDone = new CountDownLatch(PRODUCERS);
-        for (int p = 0; p < PRODUCERS; p++) {
-            producerPool.submit(() -> {
-                try {
-                    producerTask.run();
-                } finally {
-                    producersDone.countDown();
-                }
-            });
+    protected void runProducers(Runnable producerTask) throws InterruptedException {
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(PRODUCERS);
+        for (int i = 0; i < PRODUCERS; i++) {
+            executor.submit(producerTask);
         }
-        producersDone.await();
+        executor.shutdown();
+        executor.awaitTermination(1, java.util.concurrent.TimeUnit.MINUTES);
     }
 
     private void startBlockingQueueConsumers(BlockingQueue<Object> queue, Blackhole bh) {
@@ -278,25 +273,5 @@ public class MpmcEventBenchmark {
         latch.await();
     }
 
-    @Benchmark
-    @OperationsPerInvocation(BATCH_SIZE)
-    public void benchVertx(Blackhole bh) throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
-        io.vertx.core.eventbus.MessageConsumer<Object> consumer = vertx.eventBus().localConsumer("benchmark.address", msg -> {
-            bh.consume(msg.body());
-            latch.countDown();
-        });
 
-        CountDownLatch regLatch = new CountDownLatch(1);
-        consumer.completionHandler(res -> regLatch.countDown());
-        regLatch.await();
-
-        runProducers(() -> {
-            for (int i = 0; i < EVENTS_PER_PRODUCER; i++) {
-                vertx.eventBus().send("benchmark.address", EVENT);
-            }
-        });
-        latch.await();
-        consumer.unregister();
-    }
 }

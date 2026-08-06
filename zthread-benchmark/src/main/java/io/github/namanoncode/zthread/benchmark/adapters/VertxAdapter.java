@@ -19,7 +19,9 @@ public class VertxAdapter implements EventRuntimeAdapter {
         this.vertx = Vertx.vertx(options);
         this.eventBus = vertx.eventBus();
 
-        eventBus.localConsumer(ADDRESS, message -> {
+        io.vertx.core.eventbus.MessageConsumer<Object> consumer = eventBus.localConsumer(ADDRESS);
+        consumer.setMaxBufferedMessages(10_000_000);
+        consumer.handler(message -> {
             handler.onEvent((BenchmarkEvent) message.body());
         });
     }
