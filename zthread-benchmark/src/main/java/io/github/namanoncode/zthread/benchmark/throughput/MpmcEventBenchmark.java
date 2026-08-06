@@ -61,6 +61,7 @@ public class MpmcEventBenchmark {
         zRuntimes = new ZRuntime[CONSUMERS];
         for (int i = 0; i < CONSUMERS; i++) {
             zRuntimes[i] = ZRuntime.builder().build();
+            zRuntimes[i].start();
         }
 
         nettyEventLoopGroup = new DefaultEventLoopGroup(CONSUMERS);
@@ -206,12 +207,13 @@ public class MpmcEventBenchmark {
     @OperationsPerInvocation(BATCH_SIZE)
     public void benchZThread(Blackhole bh) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
-        EventHandler<io.github.namanoncode.zthread.event.CustomEvent> handler = evt -> {
+        io.github.namanoncode.zthread.handler.EventHandler<io.github.namanoncode.zthread.event.CustomEvent> handler = evt -> {
             bh.consume(evt);
             latch.countDown();
         };
+        java.util.List<io.github.namanoncode.zthread.handler.HandlerRegistration> regs = new java.util.ArrayList<>();
         for (ZRuntime zr : zRuntimes) {
-            zr.on(io.github.namanoncode.zthread.event.CustomEvent.class, handler);
+            regs.add(zr.on(io.github.namanoncode.zthread.event.CustomEvent.class, handler));
         }
 
         AtomicInteger index = new AtomicInteger();
@@ -219,10 +221,15 @@ public class MpmcEventBenchmark {
             int pIndex = index.getAndIncrement();
             ZRuntime target = zRuntimes[pIndex % CONSUMERS];
             for (int i = 0; i < EVENTS_PER_PRODUCER; i++) {
-                target.post(EVENT);
+                while (!target.tryPost(EVENT)) {
+                    java.util.concurrent.locks.LockSupport.parkNanos(10);
+                }
             }
         });
         latch.await();
+        for (io.github.namanoncode.zthread.handler.HandlerRegistration reg : regs) {
+            reg.cancel();
+        }
     }
 
     @Benchmark
@@ -270,9 +277,13 @@ public class MpmcEventBenchmark {
 
         runProducers(() -> {
             for (int i = 0; i < EVENTS_PER_PRODUCER; i++) {
-                while (reactorSink.tryEmitNext(EVENT) == reactor.core.publisher.Sinks.EmitResult.FAIL_NON_SERIALIZED) {
-                    java.util.concurrent.locks.LockSupport.parkNanos(10);
-                }
+                reactor.core.publisher.Sinks.EmitResult res;
+                do {
+                    res = reactorSink.tryEmitNext(EVENT);
+                    if (res != reactor.core.publisher.Sinks.EmitResult.OK) {
+                        java.util.concurrent.locks.LockSupport.parkNanos(10);
+                    }
+                } while (res != reactor.core.publisher.Sinks.EmitResult.OK);
             }
         });
         latch.await();

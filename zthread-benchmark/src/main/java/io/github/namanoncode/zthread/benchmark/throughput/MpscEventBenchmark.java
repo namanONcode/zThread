@@ -59,6 +59,7 @@ public class MpscEventBenchmark {
         synchronousQueue = new SynchronousQueue<>();
 
         zRuntime = ZRuntime.builder().build();
+        zRuntime.start();
         nettyEventLoop = new DefaultEventLoop();
         vertx = io.vertx.core.Vertx.vertx();
         virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
@@ -212,17 +213,20 @@ public class MpscEventBenchmark {
     @OperationsPerInvocation(BATCH_SIZE)
     public void benchZThread(Blackhole bh) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
-        zRuntime.on(io.github.namanoncode.zthread.event.CustomEvent.class, evt -> {
+        io.github.namanoncode.zthread.handler.HandlerRegistration reg = zRuntime.on(io.github.namanoncode.zthread.event.CustomEvent.class, evt -> {
             bh.consume(evt);
             latch.countDown();
         });
 
         runProducers(() -> {
             for (int i = 0; i < EVENTS_PER_PRODUCER; i++) {
-                zRuntime.post(EVENT);
+                while (!zRuntime.tryPost(EVENT)) {
+                    java.util.concurrent.locks.LockSupport.parkNanos(10);
+                }
             }
         });
         latch.await();
+        reg.cancel();
     }
 
     @Benchmark
@@ -270,9 +274,13 @@ public class MpscEventBenchmark {
 
         runProducers(() -> {
             for (int i = 0; i < EVENTS_PER_PRODUCER; i++) {
-                while (reactorSink.tryEmitNext(EVENT) == reactor.core.publisher.Sinks.EmitResult.FAIL_NON_SERIALIZED) {
-                    java.util.concurrent.locks.LockSupport.parkNanos(10);
-                }
+                reactor.core.publisher.Sinks.EmitResult res;
+                do {
+                    res = reactorSink.tryEmitNext(EVENT);
+                    if (res != reactor.core.publisher.Sinks.EmitResult.OK) {
+                        java.util.concurrent.locks.LockSupport.parkNanos(10);
+                    }
+                } while (res != reactor.core.publisher.Sinks.EmitResult.OK);
             }
         });
         latch.await();

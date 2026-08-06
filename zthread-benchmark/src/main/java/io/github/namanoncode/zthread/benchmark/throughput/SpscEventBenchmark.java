@@ -194,9 +194,13 @@ public class SpscEventBenchmark {
             });
 
         for (int i = 0; i < BATCH_SIZE; i++) {
-            while (reactorSink.tryEmitNext(EVENT) == reactor.core.publisher.Sinks.EmitResult.FAIL_NON_SERIALIZED) {
-                java.util.concurrent.locks.LockSupport.parkNanos(10);
-            }
+            reactor.core.publisher.Sinks.EmitResult res;
+            do {
+                res = reactorSink.tryEmitNext(EVENT);
+                if (res != reactor.core.publisher.Sinks.EmitResult.OK) {
+                    java.util.concurrent.locks.LockSupport.parkNanos(10);
+                }
+            } while (res != reactor.core.publisher.Sinks.EmitResult.OK);
         }
         latch.await();
     }

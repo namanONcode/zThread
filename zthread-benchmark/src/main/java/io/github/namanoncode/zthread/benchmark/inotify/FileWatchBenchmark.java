@@ -102,7 +102,7 @@ public class FileWatchBenchmark {
     @OperationsPerInvocation(BATCH_SIZE)
     public void benchZThreadInotify(Blackhole bh) throws InterruptedException, IOException {
         latch = new CountDownLatch(BATCH_SIZE);
-        zRuntime.on(FileEvent.class, evt -> {
+        io.github.namanoncode.zthread.handler.HandlerRegistration reg = zRuntime.on(FileEvent.class, evt -> {
             bh.consume(evt);
             latch.countDown();
         });
@@ -112,6 +112,7 @@ public class FileWatchBenchmark {
         }
 
         latch.await();
+        reg.cancel();
 
         // Cleanup for next invocation
         for (int i = 0; i < BATCH_SIZE; i++) {
