@@ -111,12 +111,17 @@ public class MpmcEventBenchmark {
     }
 
     protected void runProducers(Runnable producerTask) throws InterruptedException {
-        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(PRODUCERS);
-        for (int i = 0; i < PRODUCERS; i++) {
-            executor.submit(producerTask);
+        CountDownLatch producersDone = new CountDownLatch(PRODUCERS);
+        for (int p = 0; p < PRODUCERS; p++) {
+            producerPool.submit(() -> {
+                try {
+                    producerTask.run();
+                } finally {
+                    producersDone.countDown();
+                }
+            });
         }
-        executor.shutdown();
-        executor.awaitTermination(1, java.util.concurrent.TimeUnit.MINUTES);
+        producersDone.await();
     }
 
     private void startBlockingQueueConsumers(BlockingQueue<Object> queue, Blackhole bh) {
