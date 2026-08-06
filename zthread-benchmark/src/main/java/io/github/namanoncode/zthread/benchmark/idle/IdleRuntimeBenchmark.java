@@ -23,6 +23,7 @@ public class IdleRuntimeBenchmark {
     @Setup(Level.Trial)
     public void setup() {
         zRuntime = ZRuntime.builder().build();
+        zRuntime.start();
         nettyEventLoopGroup = new DefaultEventLoopGroup(1);
         vertx = io.vertx.core.Vertx.vertx();
         scheduledExecutor = Executors.newSingleThreadScheduledExecutor();

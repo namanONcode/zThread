@@ -35,6 +35,7 @@ public class TimerExecutionBenchmark {
     @Setup(Level.Trial)
     public void setup() {
         zRuntime = ZRuntime.builder().build();
+        zRuntime.start();
         scheduledExecutor = Executors.newScheduledThreadPool(1);
         nettyTimer = new HashedWheelTimer();
         nettyTimer.start();

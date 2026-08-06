@@ -37,6 +37,7 @@ public class FileWatchBenchmark {
         
         // Setup zThread
         zRuntime = ZRuntime.builder().build();
+        zRuntime.start();
         zRuntime.watch(tempDir);
         
         // Setup NIO WatchService
