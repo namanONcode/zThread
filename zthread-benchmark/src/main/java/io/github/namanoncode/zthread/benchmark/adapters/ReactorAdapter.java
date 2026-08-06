@@ -24,7 +24,9 @@ public class ReactorAdapter implements EventRuntimeAdapter {
 
     @Override
     public void submit(BenchmarkEvent event) {
-        sink.tryEmitNext(event);
+        while (sink.tryEmitNext(event) == Sinks.EmitResult.FAIL_NON_SERIALIZED) {
+            java.util.concurrent.locks.LockSupport.parkNanos(10);
+        }
     }
 
     @Override
