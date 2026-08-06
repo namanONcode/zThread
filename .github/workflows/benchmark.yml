@@ -70,4 +70,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chrono(benchmark): auto-update performance dashboard & SVG charts"
-          file_pattern: "README.md assets/benchmarks/* zthread-benchmark/target/benchmark-results/*.json"
+          file_pattern: "README.md assets/benchmarks/*"
