@@ -49,12 +49,12 @@
         <dependency>
             <groupId>org.agrona</groupId>
             <artifactId>agrona</artifactId>
-            <version>1.21.1</version>
+            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>io.undertow</groupId>
             <artifactId>undertow-core</artifactId>
-            <version>2.3.10.Final</version>
+            <version>2.4.2.Final</version>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
@@ -82,7 +82,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.6</version>
                 <configuration>
                     <!-- Skip by default; CI explicitly sets -DskipTests=false -->
                     <skipTests>${skipTests}</skipTests>
@@ -154,7 +154,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>benchmark</id>
