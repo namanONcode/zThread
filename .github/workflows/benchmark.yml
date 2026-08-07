@@ -65,7 +65,7 @@ jobs:
 
       - name: Commit & Push Updated README & Benchmark Assets
         if: github.ref == 'refs/heads/master'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chrono(benchmark): auto-update performance dashboard & SVG charts"
           file_pattern: "README.md assets/benchmarks/*"
