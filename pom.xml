@@ -108,7 +108,7 @@
 
 
         <!-- Quality Plugin Versions -->
-        <spotless.version>3.8.0</spotless.version>
+        <spotless.version>3.9.0</spotless.version>
         <checkstyle.version>3.6.0</checkstyle.version>
         <checkstyle-tool.version>13.9.0</checkstyle-tool.version>
         <pmd-plugin.version>3.28.0</pmd-plugin.version>
