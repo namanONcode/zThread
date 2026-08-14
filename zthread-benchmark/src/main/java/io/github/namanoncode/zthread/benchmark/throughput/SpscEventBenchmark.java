@@ -210,7 +210,11 @@ public class SpscEventBenchmark {
     public void benchVertx(Blackhole bh) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(BATCH_SIZE);
         io.vertx.core.eventbus.MessageConsumer<Object> consumer = vertx.eventBus().localConsumer("benchmark.address");
-        consumer.setMaxBufferedMessages(10_000_000);
+        try {
+            consumer.getClass().getMethod("setMaxBufferedMessages", int.class).invoke(consumer, 10_000_000);
+        } catch (Exception e) {
+            // Ignore if missing in newer Vert.x versions
+        }
         consumer.handler(msg -> {
             bh.consume(msg.body());
             latch.countDown();
@@ -218,8 +222,14 @@ public class SpscEventBenchmark {
 
         // Wait for consumer to be registered to avoid dropping messages
         CountDownLatch regLatch = new CountDownLatch(1);
-        consumer.completionHandler(res -> regLatch.countDown());
-        regLatch.await();
+        try {
+            java.lang.reflect.Method m = consumer.getClass().getMethod("completionHandler", io.vertx.core.Handler.class);
+            m.invoke(consumer, (io.vertx.core.Handler<io.vertx.core.AsyncResult<Void>>) res -> regLatch.countDown());
+            regLatch.await();
+        } catch (Exception e) {
+            // Fallback for newer Vert.x versions
+            Thread.sleep(100);
+        }
 
         for (int i = 0; i < BATCH_SIZE; i++) {
             vertx.eventBus().send("benchmark.address", "bench");
