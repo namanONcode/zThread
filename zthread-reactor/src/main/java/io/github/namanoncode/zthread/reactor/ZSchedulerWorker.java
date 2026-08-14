@@ -21,6 +21,7 @@ package io.github.namanoncode.zthread.reactor;
 
 import io.github.namanoncode.zthread.ZRuntime;
 import io.github.namanoncode.zthread.handler.HandlerRegistration;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,7 +39,7 @@ final class ZSchedulerWorker implements Scheduler.Worker {
 
   private final ZRuntime runtime;
   private final AtomicBoolean disposed = new AtomicBoolean(false);
-  private final ConcurrentLinkedQueue<HandlerRegistration> registrations = new ConcurrentLinkedQueue<>();
+  private final Queue<HandlerRegistration> registrations = new ConcurrentLinkedQueue<>();
 
   ZSchedulerWorker(ZRuntime runtime) {
     this.runtime = runtime;

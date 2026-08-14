@@ -24,6 +24,9 @@ package io.github.namanoncode.zthread.exception;
  */
 public class ConfigurationException extends ZThreadException {
 
+  @java.io.Serial
+  private static final long serialVersionUID = 1L;
+
   /** @param message the error message */
   public ConfigurationException(String message) {
     super(message);

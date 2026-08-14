@@ -26,6 +26,9 @@ package io.github.namanoncode.zthread.exception;
  */
 public class NativeException extends ZThreadException {
 
+  @java.io.Serial
+  private static final long serialVersionUID = 1L;
+
   private final int errno;
 
   /**

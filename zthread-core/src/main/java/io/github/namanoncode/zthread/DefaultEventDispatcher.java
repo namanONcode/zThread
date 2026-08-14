@@ -48,7 +48,6 @@ public final class DefaultEventDispatcher implements EventDispatcher {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultEventDispatcher.class);
 
-  @SuppressWarnings("PMD.LooseCoupling")
   private final Map<Class<? extends ZEvent>, List<HandlerEntry<?>>> handlers =
       new ConcurrentHashMap<>();
   private final RuntimeMetrics metrics;

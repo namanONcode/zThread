@@ -24,6 +24,9 @@ package io.github.namanoncode.zthread.exception;
  */
 public class ZThreadException extends RuntimeException {
 
+  @java.io.Serial
+  private static final long serialVersionUID = 1L;
+
   /**
    * Creates a new exception with the given message.
    *
