@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.1)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -16,10 +21,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Set up JDK 25
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: '25'
           distribution: 'temurin'
@@ -29,9 +34,17 @@ jobs:
           server-password: MAVEN_PASSWORD
 
       - name: Import GPG Key
-        uses: crazy-max/ghaction-import-gpg@v7
+        uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+
+      - name: Set Version if manual
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          VERSION="${{ inputs.version }}"
+          # Strip 'v' prefix if provided (for Maven)
+          MAVEN_VERSION="${VERSION#v}"
+          ./mvnw versions:set -DnewVersion=$MAVEN_VERSION -DgenerateBackupPoms=false
 
       - name: Build and Deploy
         run: ./mvnw clean deploy -Prelease --batch-mode --no-transfer-progress
@@ -39,8 +52,26 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
 
+      - name: Determine Tag Name
+        id: get_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            if [[ $VERSION != v* ]]; then
+              TAG_NAME="v$VERSION"
+            else
+              TAG_NAME="$VERSION"
+            fi
+            echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+            echo "release_name=Release $TAG_NAME" >> $GITHUB_OUTPUT
+          else
+            echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "release_name=Release ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.get_tag.outputs.tag_name }}
+          name: ${{ steps.get_tag.outputs.release_name }}
           generate_release_notes: true
