@@ -20,7 +20,11 @@ public class VertxAdapter implements EventRuntimeAdapter {
         this.eventBus = vertx.eventBus();
 
         io.vertx.core.eventbus.MessageConsumer<Object> consumer = eventBus.localConsumer(ADDRESS);
-        consumer.setMaxBufferedMessages(10_000_000);
+        try {
+            consumer.getClass().getMethod("setMaxBufferedMessages", int.class).invoke(consumer, 10_000_000);
+        } catch (Exception e) {
+            // Ignore if missing in newer Vert.x versions
+        }
         consumer.handler(message -> {
             handler.onEvent((BenchmarkEvent) message.body());
         });
