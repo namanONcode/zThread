@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="banner.png" alt="zThread Banner" width="100%">
+</p>
+
 # zThread
 
 [![CI](https://github.com/namanONcode/zThread/actions/workflows/ci.yml/badge.svg)](https://github.com/namanONcode/zThread/actions/workflows/ci.yml)
