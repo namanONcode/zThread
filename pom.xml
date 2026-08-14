@@ -88,7 +88,7 @@
         <reactor.version>3.8.6</reactor.version>
         <jmh.version>1.37</jmh.version>
         <netty.version>4.2.16.Final</netty.version>
-        <vertx.version>4.5.27</vertx.version>
+        <vertx.version>5.1.5</vertx.version>
 
         <!-- Test Dependencies -->
         <junit.version>6.1.2</junit.version>
