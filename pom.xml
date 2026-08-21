@@ -110,7 +110,7 @@
         <!-- Quality Plugin Versions -->
         <spotless.version>3.10.0</spotless.version>
         <checkstyle.version>3.6.0</checkstyle.version>
-        <checkstyle-tool.version>13.10.0</checkstyle-tool.version>
+        <checkstyle-tool.version>14.0.0</checkstyle-tool.version>
         <pmd-plugin.version>3.28.0</pmd-plugin.version>
         <pmd-tool.version>7.26.0</pmd-tool.version>
         <spotbugs.version>4.10.3.0</spotbugs.version>
