@@ -87,7 +87,7 @@
         <logback.version>1.6.4</logback.version>
         <reactor.version>3.8.7</reactor.version>
         <jmh.version>1.37</jmh.version>
-        <netty.version>4.2.18.Final</netty.version>
+        <netty.version>4.2.19.Final</netty.version>
         <vertx.version>5.2.0</vertx.version>
 
         <!-- Test Dependencies -->
