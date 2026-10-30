@@ -114,7 +114,7 @@
         <pmd-plugin.version>3.28.0</pmd-plugin.version>
         <pmd-tool.version>7.28.0</pmd-tool.version>
         <spotbugs.version>4.10.5.0</spotbugs.version>
-        <jacoco.version>0.8.15</jacoco.version>
+        <jacoco.version>0.8.16</jacoco.version>
     </properties>
 
     <dependencyManagement>
